@@ -553,6 +553,7 @@
             max-width: 400px;
             width: 100%;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         .modal-title {
@@ -617,6 +618,25 @@
 
         .modal-btn-secondary:hover {
             background: #E2E8F0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            font-weight: 600;
+            color: #94A3B8;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #475569;
         }
 
         .task-note {
@@ -834,12 +854,12 @@
     <!-- NOTE MODAL -->
     <div id="noteModal" class="modal-overlay" onclick="if(event.target === this) closeNoteModal()">
         <div class="modal">
+            <button class="modal-close" aria-label="Close" onclick="closeNoteModal()">&times;</button>
             <h3 class="modal-title">Add a note</h3>
             <p class="modal-subtitle">Optional - visible to both partners</p>
             <textarea id="noteInput" class="modal-textarea" placeholder="What happened? Any context to share?"></textarea>
             <div class="modal-actions">
-                <button class="modal-btn modal-btn-secondary" onclick="closeNoteModal()">Skip</button>
-                <button class="modal-btn modal-btn-primary" onclick="saveNote()">Done</button>
+                <button class="modal-btn modal-btn-primary" onclick="saveNote()">Save</button>
             </div>
         </div>
     </div>
