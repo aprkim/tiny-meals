@@ -833,7 +833,10 @@
                 </div>
 
                 <div id="completedTasksSection" class="task-section" style="display: none;">
-                    <h2 class="section-title">Done</h2>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <h2 class="section-title" style="margin-bottom: 0;">Done</h2>
+                        <button onclick="clearCompleted()" style="padding: 6px 12px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer; transition: all 0.2s;">Clear</button>
+                    </div>
                     <div id="completedTasks"></div>
                 </div>
             </div>
@@ -1220,6 +1223,14 @@
                 task.completed_by = null;
             }
 
+            saveState();
+            renderTasks();
+        }
+
+        function clearCompleted() {
+            if (!confirm('Clear all completed tasks?')) return;
+
+            state.tasks = state.tasks.filter(t => !t.completed);
             saveState();
             renderTasks();
         }
