@@ -225,6 +225,9 @@
             border: none;
             font-size: 15px;
             font-family: inherit;
+            box-sizing: border-box;
+            min-height: 44px;
+            max-height: 44px;
         }
 
         .task-input:focus {
@@ -260,6 +263,8 @@
             color: #94A3B8;
             cursor: pointer;
             transition: all 0.2s;
+            position: relative;
+            z-index: 10;
         }
 
         .assignment-pill:hover {
