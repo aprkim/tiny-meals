@@ -366,6 +366,7 @@
             display: flex;
             align-items: flex-start;
             gap: 12px;
+            position: relative;
         }
 
         .task-checkbox {
@@ -401,6 +402,7 @@
 
         .task-content {
             flex: 1;
+            padding-right: 60px;  /* Make room for star and note buttons */
         }
 
         .task-text {
@@ -435,6 +437,7 @@
         .task-badge.daily { background: #FEF2F2; color: #BF3143; }
         .task-badge.weekly { background: #F7F5FA; color: #6E6282; }
         .task-badge.monthly { background: #F4F7F4; color: #5C6D5F; }
+        .task-badge.someday { background: #E7F1EB; color: #3F6B52; }
 
         .completion-info {
             font-size: 12px;
@@ -447,7 +450,9 @@
             cursor: pointer;
             padding: 4px;
             transition: all 0.2s;
-            flex-shrink: 0;
+            position: absolute;
+            top: 0;
+            right: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -463,6 +468,10 @@
 
         .priority-btn.active svg {
             fill: #BF3143;
+        }
+
+        .priority-btn.completed-star svg {
+            fill: #64748B;
         }
 
         .empty-state {
@@ -864,10 +873,6 @@
                         <input type="text" id="taskInput" class="task-input" placeholder="Add a task..." onkeypress="if(event.key==='Enter') addTask()">
                     </div>
                     <div class="task-options">
-                        <button class="option-btn active" data-frequency="once" onclick="setFrequency('once')">Once</button>
-                        <button class="option-btn" data-frequency="daily" onclick="setFrequency('daily')">Daily</button>
-                        <button class="option-btn" data-frequency="weekly" onclick="setFrequency('weekly')">Weekly</button>
-                        <button class="option-btn" data-frequency="monthly" onclick="setFrequency('monthly')">Monthly</button>
                         <button class="option-btn" id="priorityToggle" onclick="toggleNewTaskPriority()">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="#94A3B8" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -889,6 +894,18 @@
                     </div>
                     <div id="completedTasks"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- SOMEDAY VIEW -->
+        <div id="view-someday" class="view">
+            <div class="container">
+                <div class="header">
+                    <h1 class="header-title">Someday</h1>
+                    <p class="header-subtitle">Long-term tasks and future plans</p>
+                </div>
+
+                <div id="somedayTasksList"></div>
             </div>
         </div>
 
@@ -999,6 +1016,15 @@
                     </svg>
                 </div>
                 <div class="nav-tab-label">Today</div>
+            </button>
+            <button class="nav-tab" onclick="showView('someday')">
+                <div class="nav-tab-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="12 6 12 12 16 14" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="nav-tab-label">Someday</div>
             </button>
             <button class="nav-tab" onclick="showView('all')">
                 <div class="nav-tab-icon">
@@ -1173,6 +1199,7 @@
             document.getElementById('view-' + viewName).classList.add('active');
 
             if (viewName === 'today') renderTasks();
+            if (viewName === 'someday') renderSomedayTasks();
             if (viewName === 'all') renderAllTasks();
         }
 
@@ -1239,13 +1266,6 @@
         // ==================== TASKS ====================
         let newTaskPriority = false;
 
-        function setFrequency(freq) {
-            state.selectedFrequency = freq;
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.frequency === freq);
-            });
-        }
-
         function toggleNewTaskPriority() {
             newTaskPriority = !newTaskPriority;
             const btn = document.getElementById('priorityToggle');
@@ -1262,7 +1282,7 @@
             const task = {
                 id: Date.now(),
                 text: text,
-                frequency: state.selectedFrequency,
+                frequency: 'once',  // All tasks default to 'once' now
                 completed: false,
                 completed_at: null,
                 completed_by: null,
@@ -1283,7 +1303,8 @@
             renderTasks();
         }
 
-        function toggleTask(taskId) {
+        function toggleTask(taskId, event) {
+            if (event) event.stopPropagation();
             const task = state.tasks.find(t => t.id === taskId);
             if (!task) return;
 
@@ -1444,7 +1465,6 @@
             return `
                 <div class="task-card ${categoryClass} ${priorityClass}">
                     <div class="task-main">
-                        <div class="task-checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask(${task.id})"></div>
                         <div class="task-content">
                             <div class="task-text ${task.completed ? 'completed' : ''}">${task.text}</div>
                             <div class="task-meta">
@@ -1453,7 +1473,7 @@
                             </div>
                             ${noteHtml}
                         </div>
-                        <button class="priority-btn ${task.priority ? 'active' : ''}" onclick="togglePriority(${task.id}, event)" aria-label="Mark as priority">
+                        <button class="priority-btn ${task.completed ? 'completed-star' : (task.priority ? 'active' : '')}" onclick="toggleTask(${task.id}, event)" aria-label="Toggle completion">
                             <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                             </svg>
@@ -1511,6 +1531,35 @@
             });
 
             container.innerHTML = html;
+        }
+
+        function renderSomedayTasks() {
+            const container = document.getElementById('somedayTasksList');
+            const somedayTasks = state.tasks;  // Show all tasks in Someday view
+
+            if (somedayTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polyline points="12 6 12 12 16 14" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="empty-state-text">No long-term tasks yet</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by priority first, then creation date
+            const sortedTasks = [...somedayTasks].sort((a, b) => {
+                if (a.priority && !b.priority) return -1;
+                if (!a.priority && b.priority) return 1;
+                return a.created_at - b.created_at;
+            });
+
+            container.innerHTML = sortedTasks.map(task => renderTaskCard(task)).join('');
         }
 
         // ==================== HELPERS ====================
