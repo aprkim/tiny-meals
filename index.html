@@ -850,6 +850,26 @@
                     <p class="header-subtitle">Manage sync and preferences</p>
                 </div>
 
+                <!-- User Info Card -->
+                <div style="margin-top: 16px; padding: 20px; background: white; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: #333; margin-bottom: 16px;">
+                        <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; color: #BF3143;">
+                            <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Your Space</span>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-size: 13px; color: #64748B; margin-bottom: 4px;">Partners</div>
+                        <div id="partnerNames" style="font-size: 15px; font-weight: 500; color: #333;"></div>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 13px; color: #64748B; margin-bottom: 4px;">You are</div>
+                        <div id="currentUserName" style="font-size: 15px; font-weight: 500; color: #333;"></div>
+                    </div>
+                    <button class="btn-secondary" onclick="switchUser()" style="width: 100%;">Switch User</button>
+                </div>
+
                 <!-- Cross-Device Sync Card -->
                 <div style="margin-top: 16px; padding: 20px; background: white; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
                     <div style="display: flex; align-items: center; gap: 10px; margin: 0 0 8px 0;">
@@ -872,26 +892,6 @@
                         <input id="enterSyncCodeInput" type="text" placeholder="Enter sync code from another device" style="flex: 1; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; min-width: 0; background: white; outline: none;">
                         <button onclick="submitSyncCode()" style="padding: 12px 20px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; background: #eef2f7; color: #5b6474; cursor: pointer;">Link</button>
                     </div>
-                </div>
-
-                <!-- User Info Card -->
-                <div style="margin-top: 16px; padding: 20px; background: white; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                    <div style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: #333; margin-bottom: 16px;">
-                        <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; color: #BF3143;">
-                            <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <span>Your Space</span>
-                    </div>
-
-                    <div style="margin-bottom: 12px;">
-                        <div style="font-size: 13px; color: #64748B; margin-bottom: 4px;">Partners</div>
-                        <div id="partnerNames" style="font-size: 15px; font-weight: 500; color: #333;"></div>
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <div style="font-size: 13px; color: #64748B; margin-bottom: 4px;">You are</div>
-                        <div id="currentUserName" style="font-size: 15px; font-weight: 500; color: #333;"></div>
-                    </div>
-                    <button class="btn-secondary" onclick="switchUser()" style="width: 100%;">Switch User</button>
                 </div>
 
                 <!-- Data Management Card -->
