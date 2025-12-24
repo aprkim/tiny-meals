@@ -771,6 +771,14 @@
             width: 100%;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             position: relative;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+            opacity: 1;
         }
 
         .modal-title {
@@ -1212,11 +1220,24 @@
     <!-- CONFIRM MODAL -->
     <div id="confirmModal" class="modal-overlay" onclick="if(event.target === this) closeConfirmModal()">
         <div class="modal">
-            <h3 class="modal-title">Clear all completed tasks?</h3>
-            <p class="modal-subtitle">This action cannot be undone</p>
+            <h3 class="modal-title" id="confirmTitle">Confirm</h3>
+            <p class="modal-subtitle" id="confirmSubtitle">Are you sure?</p>
             <div class="modal-actions">
                 <button class="modal-btn modal-btn-secondary" onclick="closeConfirmModal()">Cancel</button>
-                <button class="modal-btn modal-btn-primary" onclick="confirmClear()">Clear</button>
+                <button class="modal-btn modal-btn-primary" id="confirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATE MODAL -->
+    <div id="dateModal" class="modal-overlay" onclick="if(event.target === this) closeDateModal()">
+        <div class="modal">
+            <button class="modal-close" aria-label="Close" onclick="closeDateModal()">&times;</button>
+            <h3 class="modal-title">Set Due Date</h3>
+            <input type="date" id="dateInputPicker" class="form-input" style="margin-bottom: 16px;">
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-secondary" onclick="clearDate()">Clear</button>
+                <button class="modal-btn modal-btn-primary" onclick="saveDate()">Set Date</button>
             </div>
         </div>
     </div>
@@ -1321,10 +1342,15 @@
         }
 
         function resetApp() {
-            if (confirm('This will delete all data. Are you sure?')) {
-                localStorage.clear();
-                location.reload();
-            }
+            showConfirm(
+                'Reset Everything?',
+                'This will delete all data from this device. This cannot be undone.',
+                () => {
+                    localStorage.clear();
+                    location.reload();
+                },
+                'Reset'
+            );
         }
 
         // ==================== APP DISPLAY ====================
@@ -1507,18 +1533,36 @@
         }
 
         function toggleDatePicker() {
-            // Simple date picker - for now just prompt
-            const dateStr = prompt('Enter due date (e.g., Jan 15, 2026):');
-            if (dateStr) {
-                newTaskDueDate = dateStr;
-                document.getElementById('dateLabel').textContent = dateStr;
-                document.getElementById('inputDate').classList.add('active');
-            } else if (dateStr === '') {
-                // Clear date
-                newTaskDueDate = null;
-                document.getElementById('dateLabel').textContent = '';
-                document.getElementById('inputDate').classList.remove('active');
+            document.getElementById('dateModal').classList.add('active');
+            // Pre-fill if value exists
+            if (newTaskDueDate) {
+                document.getElementById('dateInputPicker').value = newTaskDueDate;
             }
+        }
+
+        function closeDateModal() {
+            document.getElementById('dateModal').classList.remove('active');
+        }
+
+        function saveDate() {
+            const val = document.getElementById('dateInputPicker').value;
+            if (val) {
+                newTaskDueDate = val;
+                // Format for label (e.g., "Jan 15")
+                const dateObj = new Date(val + 'T12:00:00'); // T12:00:00 prevents timezone shifts
+                const label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                document.getElementById('dateLabel').textContent = label;
+                document.getElementById('inputDate').classList.add('active');
+            }
+            closeDateModal();
+        }
+
+        function clearDate() {
+            newTaskDueDate = null;
+            document.getElementById('dateLabel').textContent = '';
+            document.getElementById('inputDate').classList.remove('active');
+            document.getElementById('dateInputPicker').value = '';
+            closeDateModal();
         }
 
         function addTask() {
@@ -1626,18 +1670,34 @@
         }
 
         function clearCompleted() {
+            showConfirm(
+                'Clear completed tasks?',
+                'This will remove all tasks in the Done list.',
+                () => {
+                    state.tasks = state.tasks.filter(t => !t.completed);
+                    saveState();
+                    renderTasks();
+                },
+                'Clear'
+            );
+        }
+
+        function showConfirm(title, subtitle, onConfirm, confirmText = 'Confirm') {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmSubtitle').textContent = subtitle;
+            
+            const btn = document.getElementById('confirmBtn');
+            btn.textContent = confirmText;
+            btn.onclick = () => {
+                onConfirm();
+                closeConfirmModal();
+            };
+            
             document.getElementById('confirmModal').classList.add('active');
         }
 
         function closeConfirmModal() {
             document.getElementById('confirmModal').classList.remove('active');
-        }
-
-        function confirmClear() {
-            state.tasks = state.tasks.filter(t => !t.completed);
-            saveState();
-            renderTasks();
-            closeConfirmModal();
         }
 
         function toggleNoteDisplay(taskId, event) {
@@ -1653,11 +1713,16 @@
             const task = state.tasks.find(t => t.id === taskId);
             if (!task) return;
 
-            if (confirm('Delete this note?')) {
-                task.completed_note = null;
-                saveState();
-                renderTasks();
-            }
+            showConfirm(
+                'Delete note?',
+                'This cannot be undone.',
+                () => {
+                    task.completed_note = null;
+                    saveState();
+                    renderTasks();
+                },
+                'Delete'
+            );
         }
 
         function openNoteModal(taskId, event) {
@@ -1746,6 +1811,10 @@
                 ? `<span class="task-badge assignment">${assigneeLabel}</span>`
                 : '';
 
+            const dueDateHtml = task.due_date 
+                ? `<span class="task-due-date">Due ${new Date(task.due_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>`
+                : '';
+
             // Auto-detect category based on task text
             const isBuy = task.text.toLowerCase().includes('buy');
             const categoryClass = isBuy ? 'buy' : 'do';
@@ -1776,12 +1845,14 @@
                             <div class="task-meta">
                                 ${assigneeBadge}
                                 ${freqBadge}
+                                ${dueDateHtml}
                                 ${completionInfo}
                             </div>
                             ${noteHtml}
                         </div>
                         ${priorityBtn}
                         <button class="note-button ${task.completed_note ? 'has-note' : ''}" onclick="${task.completed_note ? `toggleNoteDisplay(${task.id}, event)` : `openNoteModal(${task.id}, event)`}" aria-label="${task.completed_note ? 'View note' : 'Add note'}">
+                        <button class="note-button ${hasNote ? 'has-note' : ''}" onclick="${hasNote ? `toggleNoteDisplay(${task.id}, event)` : `openNoteModal(${task.id}, event)`}" aria-label="${hasNote ? 'View note' : 'Add note'}">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                                 <path d="M3 3h14c1.1 0 2 .9 2 2v10l-6 6H3c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2zm14 2H3v14h10v-6h4V5z"/>
                             </svg>
@@ -2091,20 +2162,25 @@
                 return;
               }
 
-              if (confirm('This will replace all current data. Continue?')) {
-                state.space = data.space;
-                state.currentUser = data.currentUser;
-                state.tasks = data.tasks;
+              showConfirm(
+                  'Import Data?',
+                  'This will replace all current data. Continue?',
+                  () => {
+                    state.space = data.space;
+                    state.currentUser = data.currentUser;
+                    state.tasks = data.tasks;
 
-                normalizeTaskAssignments();
-                saveState();
-                updateAssignmentPills();
-                updateSettings();
-                renderTasks();
-                renderAllTasks();
+                    normalizeTaskAssignments();
+                    saveState();
+                    updateAssignmentPills();
+                    updateSettings();
+                    renderTasks();
+                    renderAllTasks();
 
-                alert('Data imported successfully!');
-              }
+                    alert('Data imported successfully!');
+                  },
+                  'Import'
+              );
             } catch (error) {
               console.error('Import error:', error);
               alert('Failed to import file');
@@ -2122,18 +2198,23 @@
       }
 
       function disconnectSync() {
-        if (!confirm('This will disconnect this device from sync. Continue?')) return;
+        showConfirm(
+            'Disconnect Sync?',
+            'This will disconnect this device from sync. Continue?',
+            () => {
+                localStorage.removeItem('tinyNudge_syncCode');
+                syncCode = null;
 
-        localStorage.removeItem('tinyNudge_syncCode');
-        syncCode = null;
+                if (unsubscribe) {
+                    unsubscribe();
+                    unsubscribe = null;
+                }
 
-        if (unsubscribe) {
-          unsubscribe();
-          unsubscribe = null;
-        }
-
-        updateSettings();
-        alert('Sync disconnected');
+                updateSettings();
+                alert('Sync disconnected');
+            },
+            'Disconnect'
+        );
       }
     </script>
 </body>
