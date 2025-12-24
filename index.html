@@ -447,7 +447,6 @@
             cursor: pointer;
             padding: 4px;
             font-size: 16px;
-            color: #BF3143;
             opacity: 0.3;
             transition: all 0.2s;
             flex-shrink: 0;
@@ -864,7 +863,7 @@
                         <button class="option-btn" data-frequency="daily" onclick="setFrequency('daily')">Daily</button>
                         <button class="option-btn" data-frequency="weekly" onclick="setFrequency('weekly')">Weekly</button>
                         <button class="option-btn" data-frequency="monthly" onclick="setFrequency('monthly')">Monthly</button>
-                        <button class="option-btn" id="priorityToggle" onclick="toggleNewTaskPriority()" style="font-size: 16px; opacity: 0.3; color: #BF3143;">⭐</button>
+                        <button class="option-btn" id="priorityToggle" onclick="toggleNewTaskPriority()" style="font-size: 16px; opacity: 0.3;">🔴</button>
                         <button class="btn-add" onclick="addTask()">Add</button>
                     </div>
                 </div>
@@ -1443,7 +1442,7 @@
                             </div>
                             ${noteHtml}
                         </div>
-                        <button class="priority-btn ${task.priority ? 'active' : ''}" onclick="togglePriority(${task.id}, event)" aria-label="Mark as priority">⭐</button>
+                        <button class="priority-btn ${task.priority ? 'active' : ''}" onclick="togglePriority(${task.id}, event)" aria-label="Mark as priority">🔴</button>
                         <button class="note-button ${task.completed_note ? 'has-note' : ''}" onclick="${task.completed_note ? `toggleNoteDisplay(${task.id}, event)` : `openNoteModal(${task.id}, event)`}" aria-label="${task.completed_note ? 'View note' : 'Add note'}">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" fill="none">
                                 <path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3-4 3-4-3-4 3V5a1 1 0 0 1 1-1z" stroke-linecap="round" stroke-linejoin="round"/>
