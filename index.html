@@ -906,11 +906,6 @@
                         <input type="text" id="futureTaskInput" class="task-input" placeholder="Add a future task..." onkeypress="if(event.key==='Enter') addFutureTask()">
                     </div>
                     <div class="task-options">
-                        <button class="option-btn" id="futurePriorityToggle" onclick="toggleFutureTaskPriority()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#94A3B8" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                            </svg>
-                        </button>
                         <button class="btn-add" onclick="addFutureTask()">Add</button>
                     </div>
                 </div>
@@ -1277,7 +1272,6 @@
 
         // ==================== TASKS ====================
         let newTaskPriority = false;
-        let newFutureTaskPriority = false;
 
         function setFrequency(freq) {
             state.selectedFrequency = freq;
@@ -1291,13 +1285,6 @@
             const btn = document.getElementById('priorityToggle');
             const svg = btn.querySelector('svg');
             svg.setAttribute('fill', newTaskPriority ? '#BF3143' : '#94A3B8');
-        }
-
-        function toggleFutureTaskPriority() {
-            newFutureTaskPriority = !newFutureTaskPriority;
-            const btn = document.getElementById('futurePriorityToggle');
-            const svg = btn.querySelector('svg');
-            svg.setAttribute('fill', newFutureTaskPriority ? '#BF3143' : '#94A3B8');
         }
 
         function addTask() {
@@ -1346,7 +1333,7 @@
                 completed_note: null,
                 created_at: Date.now(),
                 created_by: state.currentUser.name,
-                priority: newFutureTaskPriority,
+                priority: false,
                 isFuture: true
             };
 
@@ -1354,10 +1341,6 @@
             saveState();
 
             input.value = '';
-            // Reset priority toggle
-            newFutureTaskPriority = false;
-            const priorityBtn = document.getElementById('futurePriorityToggle');
-            priorityBtn.querySelector('svg').setAttribute('fill', '#94A3B8');
             renderFutureTasks();
         }
 
@@ -1609,12 +1592,8 @@
                 return;
             }
 
-            // Sort by priority first, then creation date
-            const sortedTasks = [...futureTasks].sort((a, b) => {
-                if (a.priority && !b.priority) return -1;
-                if (!a.priority && b.priority) return 1;
-                return a.created_at - b.created_at;
-            });
+            // Sort by creation date
+            const sortedTasks = [...futureTasks].sort((a, b) => a.created_at - b.created_at);
 
             container.innerHTML = sortedTasks.map(task => renderTaskCard(task)).join('');
         }
