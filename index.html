@@ -350,11 +350,16 @@
         }
 
         .task-card.buy {
-            border-right-color: rgba(110, 98, 130, 0.3);  /* Weekend pill purple #6E6282 */
+            border-right-color: rgba(63, 107, 82, 0.5);  /* Sync ON green #3F6B52 - more visible */
         }
 
         .task-card.do {
-            border-right-color: rgba(92, 109, 95, 0.3);  /* Special Day pill green #5C6D5F */
+            border-right-color: rgba(110, 98, 130, 0.5);  /* Weekend pill purple #6E6282 - distinct from green */
+        }
+
+        .task-card.priority {
+            border-right-width: 3px;
+            border-right-color: #BF3143 !important;  /* Primary red for priority items */
         }
 
         .task-main {
@@ -434,6 +439,25 @@
         .completion-info {
             font-size: 12px;
             color: #94A3B8;
+        }
+
+        .priority-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            font-size: 16px;
+            opacity: 0.3;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .priority-btn:hover {
+            opacity: 0.6;
+        }
+
+        .priority-btn.active {
+            opacity: 1;
         }
 
         .empty-state {
@@ -1255,6 +1279,16 @@
             renderTasks();
         }
 
+        function togglePriority(taskId, event) {
+            event.stopPropagation();
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            task.priority = !task.priority;
+            saveState();
+            renderTasks();
+        }
+
         function clearCompleted() {
             document.getElementById('confirmModal').classList.add('active');
         }
@@ -1328,6 +1362,13 @@
             const activeTasks = state.tasks.filter(t => !t.completed);
             const completedTasks = state.tasks.filter(t => t.completed);
 
+            // Sort active tasks: priority tasks first, then by creation time
+            activeTasks.sort((a, b) => {
+                if (a.priority && !b.priority) return -1;
+                if (!a.priority && b.priority) return 1;
+                return a.created_at - b.created_at;
+            });
+
             const activeContainer = document.getElementById('activeTasks');
             const completedContainer = document.getElementById('completedTasks');
             const completedSection = document.getElementById('completedTasksSection');
@@ -1367,6 +1408,7 @@
             // Auto-detect category based on task text
             const isBuy = task.text.toLowerCase().includes('buy');
             const categoryClass = isBuy ? 'buy' : 'do';
+            const priorityClass = task.priority ? 'priority' : '';
 
             const noteHtml = task.completed_note
                 ? `<div class="task-note" id="note-${task.id}">
@@ -1376,7 +1418,7 @@
                 : '';
 
             return `
-                <div class="task-card ${categoryClass}">
+                <div class="task-card ${categoryClass} ${priorityClass}">
                     <div class="task-main">
                         <div class="task-checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask(${task.id})"></div>
                         <div class="task-content">
@@ -1387,6 +1429,7 @@
                             </div>
                             ${noteHtml}
                         </div>
+                        <button class="priority-btn ${task.priority ? 'active' : ''}" onclick="togglePriority(${task.id}, event)" aria-label="Mark as priority">⭐</button>
                         <button class="note-button ${task.completed_note ? 'has-note' : ''}" onclick="${task.completed_note ? `toggleNoteDisplay(${task.id}, event)` : `openNoteModal(${task.id}, event)`}" aria-label="${task.completed_note ? 'View note' : 'Add note'}">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" fill="none">
                                 <path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3-4 3-4-3-4 3V5a1 1 0 0 1 1-1z" stroke-linecap="round" stroke-linejoin="round"/>
