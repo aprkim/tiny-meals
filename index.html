@@ -245,32 +245,30 @@
         /* Assignment Pills */
         .assignment-pills {
             display: flex;
-            gap: 4px;
-            background: #f0f4f3;
-            padding: 3px;
-            border-radius: 8px;
+            gap: 6px;
         }
 
         .assignment-pill {
-            padding: 6px 12px;
+            padding: 5px 10px;
             background: transparent;
-            border: none;
+            border: 1px solid #e2e8f0;
             border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #64748b;
+            font-size: 12px;
+            font-weight: 400;
+            color: #94A3B8;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .assignment-pill:hover {
-            background: rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+            color: #64748b;
         }
 
         .assignment-pill.active {
-            background: white;
-            color: #333333;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+            color: #64748b;
+            background: transparent;
         }
 
         /* Input Star */
@@ -291,6 +289,7 @@
 
         .input-star.active svg {
             fill: #BF3143;
+            opacity: 0.6;
         }
 
         /* Input Date */
@@ -530,6 +529,23 @@
             color: #94A3B8;
         }
 
+        /* Due Date on Task Cards (design guidance - not yet implemented) */
+        .task-due-date {
+            font-size: 12px;
+            color: #94A3B8;
+            font-weight: 400;
+        }
+
+        /* Design notes:
+         * - Due date should appear inline in .task-meta after badges
+         * - Format: "Due Fri" or "Due Jan 15"
+         * - Always muted gray (#94A3B8)
+         * - No red even if overdue
+         * - No urgency language ("overdue", "late", etc.)
+         * - Secondary visual weight to task title
+         * - Sits alongside frequency badge and completion info
+         */
+
         .priority-btn {
             background: transparent;
             border: none;
@@ -543,15 +559,20 @@
         }
 
         .priority-btn svg {
-            fill: #94A3B8;
+            fill: none;
+            stroke: #cbd5e1;
+            stroke-width: 2;
         }
 
         .priority-btn:hover svg {
-            opacity: 0.7;
+            stroke: #94A3B8;
         }
 
         .priority-btn.active svg {
-            fill: #BF3143;
+            fill: none;
+            stroke: #BF3143;
+            stroke-width: 2;
+            opacity: 0.6;
         }
 
         .empty-state {
