@@ -892,6 +892,35 @@
             </div>
         </div>
 
+        <!-- FUTURE VIEW -->
+        <div id="view-future" class="view">
+            <div class="container">
+                <a href="https://tinywins.space" class="suite-back-link">← TinyWins</a>
+                <div class="header">
+                    <h1 class="header-title">Future</h1>
+                    <p class="header-subtitle">Long-term tasks and plans</p>
+                </div>
+
+                <div class="task-input-container">
+                    <div class="task-input-row">
+                        <input type="text" id="futureTaskInput" class="task-input" placeholder="Add a future task..." onkeypress="if(event.key==='Enter') addFutureTask()">
+                    </div>
+                    <div class="task-options">
+                        <button class="option-btn" id="futurePriorityToggle" onclick="toggleFutureTaskPriority()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#94A3B8" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </button>
+                        <button class="btn-add" onclick="addFutureTask()">Add</button>
+                    </div>
+                </div>
+
+                <div id="futureTasksSection" class="task-section">
+                    <div id="futureTasks"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- ALL TASKS VIEW -->
         <div id="view-all" class="view">
             <div class="container">
@@ -999,6 +1028,15 @@
                     </svg>
                 </div>
                 <div class="nav-tab-label">Today</div>
+            </button>
+            <button class="nav-tab" onclick="showView('future')">
+                <div class="nav-tab-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="12 6 12 12 16 14" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="nav-tab-label">Future</div>
             </button>
             <button class="nav-tab" onclick="showView('all')">
                 <div class="nav-tab-icon">
@@ -1173,6 +1211,7 @@
             document.getElementById('view-' + viewName).classList.add('active');
 
             if (viewName === 'today') renderTasks();
+            if (viewName === 'future') renderFutureTasks();
             if (viewName === 'all') renderAllTasks();
         }
 
@@ -1238,6 +1277,7 @@
 
         // ==================== TASKS ====================
         let newTaskPriority = false;
+        let newFutureTaskPriority = false;
 
         function setFrequency(freq) {
             state.selectedFrequency = freq;
@@ -1251,6 +1291,13 @@
             const btn = document.getElementById('priorityToggle');
             const svg = btn.querySelector('svg');
             svg.setAttribute('fill', newTaskPriority ? '#BF3143' : '#94A3B8');
+        }
+
+        function toggleFutureTaskPriority() {
+            newFutureTaskPriority = !newFutureTaskPriority;
+            const btn = document.getElementById('futurePriorityToggle');
+            const svg = btn.querySelector('svg');
+            svg.setAttribute('fill', newFutureTaskPriority ? '#BF3143' : '#94A3B8');
         }
 
         function addTask() {
@@ -1281,6 +1328,37 @@
             const priorityBtn = document.getElementById('priorityToggle');
             priorityBtn.querySelector('svg').setAttribute('fill', '#94A3B8');
             renderTasks();
+        }
+
+        function addFutureTask() {
+            const input = document.getElementById('futureTaskInput');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const task = {
+                id: Date.now(),
+                text: text,
+                frequency: 'once',
+                completed: false,
+                completed_at: null,
+                completed_by: null,
+                completed_note: null,
+                created_at: Date.now(),
+                created_by: state.currentUser.name,
+                priority: newFutureTaskPriority,
+                isFuture: true
+            };
+
+            state.tasks.push(task);
+            saveState();
+
+            input.value = '';
+            // Reset priority toggle
+            newFutureTaskPriority = false;
+            const priorityBtn = document.getElementById('futurePriorityToggle');
+            priorityBtn.querySelector('svg').setAttribute('fill', '#94A3B8');
+            renderFutureTasks();
         }
 
         function toggleTask(taskId) {
@@ -1383,8 +1461,8 @@
         function renderTasks() {
             const today = new Date().toDateString();
 
-            const activeTasks = state.tasks.filter(t => !t.completed);
-            const completedTasks = state.tasks.filter(t => t.completed);
+            const activeTasks = state.tasks.filter(t => !t.completed && !t.isFuture);
+            const completedTasks = state.tasks.filter(t => t.completed && !t.isFuture);
 
             // Sort active tasks: priority tasks first, then by creation time
             activeTasks.sort((a, b) => {
@@ -1510,6 +1588,35 @@
             });
 
             container.innerHTML = html;
+        }
+
+        function renderFutureTasks() {
+            const container = document.getElementById('futureTasks');
+            const futureTasks = state.tasks.filter(t => t.isFuture);
+
+            if (futureTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polyline points="12 6 12 12 16 14" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="empty-state-text">No future tasks yet</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by priority first, then creation date
+            const sortedTasks = [...futureTasks].sort((a, b) => {
+                if (a.priority && !b.priority) return -1;
+                if (!a.priority && b.priority) return 1;
+                return a.created_at - b.created_at;
+            });
+
+            container.innerHTML = sortedTasks.map(task => renderTaskCard(task)).join('');
         }
 
         // ==================== HELPERS ====================
