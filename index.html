@@ -863,6 +863,7 @@
                         <button class="option-btn" data-frequency="daily" onclick="setFrequency('daily')">Daily</button>
                         <button class="option-btn" data-frequency="weekly" onclick="setFrequency('weekly')">Weekly</button>
                         <button class="option-btn" data-frequency="monthly" onclick="setFrequency('monthly')">Monthly</button>
+                        <button class="option-btn" id="priorityToggle" onclick="toggleNewTaskPriority()" style="font-size: 16px; opacity: 0.3;">⭐</button>
                         <button class="btn-add" onclick="addTask()">Add</button>
                     </div>
                 </div>
@@ -1227,11 +1228,19 @@
         }
 
         // ==================== TASKS ====================
+        let newTaskPriority = false;
+
         function setFrequency(freq) {
             state.selectedFrequency = freq;
             document.querySelectorAll('.option-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.frequency === freq);
             });
+        }
+
+        function toggleNewTaskPriority() {
+            newTaskPriority = !newTaskPriority;
+            const btn = document.getElementById('priorityToggle');
+            btn.style.opacity = newTaskPriority ? '1' : '0.3';
         }
 
         function addTask() {
@@ -1249,13 +1258,17 @@
                 completed_by: null,
                 completed_note: null,
                 created_at: Date.now(),
-                created_by: state.currentUser.name
+                created_by: state.currentUser.name,
+                priority: newTaskPriority
             };
 
             state.tasks.push(task);
             saveState();
 
             input.value = '';
+            // Reset priority toggle
+            newTaskPriority = false;
+            document.getElementById('priorityToggle').style.opacity = '0.3';
             renderTasks();
         }
 
