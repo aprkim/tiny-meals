@@ -446,11 +446,12 @@
             border: none;
             cursor: pointer;
             padding: 4px;
-            font-size: 16px;
             opacity: 0.3;
             transition: all 0.2s;
             flex-shrink: 0;
-            filter: grayscale(100%) brightness(0.4) sepia(100%) hue-rotate(-10deg) saturate(500%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .priority-btn:hover {
@@ -864,7 +865,11 @@
                         <button class="option-btn" data-frequency="daily" onclick="setFrequency('daily')">Daily</button>
                         <button class="option-btn" data-frequency="weekly" onclick="setFrequency('weekly')">Weekly</button>
                         <button class="option-btn" data-frequency="monthly" onclick="setFrequency('monthly')">Monthly</button>
-                        <button class="option-btn" id="priorityToggle" onclick="toggleNewTaskPriority()" style="font-size: 16px; opacity: 0.3; filter: grayscale(100%) brightness(0.4) sepia(100%) hue-rotate(-10deg) saturate(500%);">⭐</button>
+                        <button class="option-btn" id="priorityToggle" onclick="toggleNewTaskPriority()" style="opacity: 0.3;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#BF3143" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </button>
                         <button class="btn-add" onclick="addTask()">Add</button>
                     </div>
                 </div>
@@ -1443,7 +1448,11 @@
                             </div>
                             ${noteHtml}
                         </div>
-                        <button class="priority-btn ${task.priority ? 'active' : ''}" onclick="togglePriority(${task.id}, event)" aria-label="Mark as priority">⭐</button>
+                        <button class="priority-btn ${task.priority ? 'active' : ''}" onclick="togglePriority(${task.id}, event)" aria-label="Mark as priority">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#BF3143" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </button>
                         <button class="note-button ${task.completed_note ? 'has-note' : ''}" onclick="${task.completed_note ? `toggleNoteDisplay(${task.id}, event)` : `openNoteModal(${task.id}, event)`}" aria-label="${task.completed_note ? 'View note' : 'Add note'}">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" fill="none">
                                 <path d="M5 4h14a1 1 0 0 1 1 1v14l-4-3-4 3-4-3-4 3V5a1 1 0 0 1 1-1z" stroke-linecap="round" stroke-linejoin="round"/>
