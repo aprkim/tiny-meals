@@ -1002,6 +1002,18 @@
         </div>
     </div>
 
+    <!-- CONFIRM MODAL -->
+    <div id="confirmModal" class="modal-overlay" onclick="if(event.target === this) closeConfirmModal()">
+        <div class="modal">
+            <h3 class="modal-title">Clear all completed tasks?</h3>
+            <p class="modal-subtitle">This action cannot be undone</p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" onclick="confirmClear()">Clear</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==================== STATE ====================
         let state = {
@@ -1244,11 +1256,18 @@
         }
 
         function clearCompleted() {
-            if (!confirm('Clear all completed tasks?')) return;
+            document.getElementById('confirmModal').classList.add('active');
+        }
 
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('active');
+        }
+
+        function confirmClear() {
             state.tasks = state.tasks.filter(t => !t.completed);
             saveState();
             renderTasks();
+            closeConfirmModal();
         }
 
         function toggleNoteDisplay(taskId, event) {
