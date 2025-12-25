@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Tiny Nudge – Shared tasks for couples</title>
+    <!-- Build: 2025-12-25-v3-cache-bust -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <meta property="og:title" content="Tiny Nudge">
@@ -1453,6 +1454,7 @@
 
         function showUserPicker() {
             document.getElementById('onboarding').style.display = 'none';
+            document.getElementById('onboardingSyncInput').style.display = 'none';
             document.getElementById('userPicker').style.display = 'flex';
 
             const userButtons = document.getElementById('userButtons');
@@ -1477,7 +1479,7 @@
         function resetApp() {
             showConfirm(
                 'Reset Everything?',
-                'This will delete all data from this device. This cannot be undone.',
+                'This will delete all data from this device and disconnect from sync. This cannot be undone.',
                 () => {
                     localStorage.clear();
                     location.reload();
@@ -1510,15 +1512,20 @@
 
             // Set the sync code - this will trigger Firebase sync
             if (setSyncCodeValue(code)) {
-                // Wait for data to sync, then show user picker
-                setTimeout(() => {
+                // Poll for data to sync, then show user picker
+                let attempts = 0;
+                const checkInterval = setInterval(() => {
+                    attempts++;
+
                     if (state.space && state.space.members && state.space.members.length > 0) {
+                        clearInterval(checkInterval);
                         showUserPicker();
-                    } else {
+                    } else if (attempts > 20) {
+                        clearInterval(checkInterval);
                         showAlert('No data found for this sync code. Please check the code and try again.');
                         backToOnboarding();
                     }
-                }, 3000);
+                }, 500);
             }
         }
 
@@ -2500,7 +2507,6 @@
         isFirstLoad = true;
         setupFirebaseSync();
 
-        updateSettings();
         return true;
       }
 
