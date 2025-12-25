@@ -1505,16 +1505,15 @@
                 return;
             }
 
+            // Clear current user to force user picker to show
+            state.currentUser = null;
+
             // Set the sync code - this will trigger Firebase sync
             if (setSyncCodeValue(code)) {
-                // Wait for data to sync, then show user picker or app
+                // Wait for data to sync, then show user picker
                 setTimeout(() => {
                     if (state.space && state.space.members && state.space.members.length > 0) {
-                        if (!state.currentUser) {
-                            showUserPicker();
-                        } else {
-                            showApp();
-                        }
+                        showUserPicker();
                     } else {
                         alert('No data found for this sync code. Please check the code and try again.');
                         backToOnboarding();
