@@ -1037,6 +1037,27 @@
                 <input type="text" id="partner2" class="form-input" placeholder="Partner's name">
             </div>
             <button class="btn-primary" onclick="createSpace()">Create our space</button>
+
+            <div style="margin-top: 24px; text-align: center;">
+                <p style="font-size: 14px; color: #64748b; margin-bottom: 12px;">Already have a sync code?</p>
+                <button class="btn-secondary" onclick="showOnboardingSyncInput()" style="width: 100%;">Enter sync code</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SYNC CODE INPUT ==================== -->
+    <div id="onboardingSyncInput" class="onboarding" style="display: none;">
+        <div class="onboarding-header">
+            <h1 class="onboarding-title">Enter Sync Code</h1>
+            <p class="onboarding-subtitle">Connect to your partner's existing space</p>
+        </div>
+        <div class="setup-form">
+            <div class="form-group">
+                <label class="form-label">Sync code from your partner</label>
+                <input type="text" id="onboardingSyncCodeInput" class="form-input" placeholder="Enter sync code">
+            </div>
+            <button class="btn-primary" onclick="linkOnboardingSyncCode()">Connect</button>
+            <button class="btn-secondary" onclick="backToOnboarding()" style="width: 100%; margin-top: 12px;">Back</button>
         </div>
     </div>
 
@@ -1465,10 +1486,48 @@
             );
         }
 
+        function showOnboardingSyncInput() {
+            document.getElementById('onboarding').style.display = 'none';
+            document.getElementById('onboardingSyncInput').style.display = 'flex';
+        }
+
+        function backToOnboarding() {
+            document.getElementById('onboardingSyncInput').style.display = 'none';
+            document.getElementById('onboarding').style.display = 'flex';
+        }
+
+        function linkOnboardingSyncCode() {
+            const input = document.getElementById('onboardingSyncCodeInput');
+            const code = input.value.trim().toLowerCase();
+
+            if (!code) {
+                alert('Please enter a sync code');
+                return;
+            }
+
+            // Set the sync code - this will trigger Firebase sync
+            if (setSyncCodeValue(code)) {
+                // Wait for data to sync, then show user picker or app
+                setTimeout(() => {
+                    if (state.space && state.space.members && state.space.members.length > 0) {
+                        if (!state.currentUser) {
+                            showUserPicker();
+                        } else {
+                            showApp();
+                        }
+                    } else {
+                        alert('No data found for this sync code. Please check the code and try again.');
+                        backToOnboarding();
+                    }
+                }, 3000);
+            }
+        }
+
         // ==================== APP DISPLAY ====================
         function showApp() {
             document.getElementById('onboarding').style.display = 'none';
             document.getElementById('userPicker').style.display = 'none';
+            document.getElementById('onboardingSyncInput').style.display = 'none';
             document.getElementById('app').classList.add('active');
 
             updateAssignmentPills();
