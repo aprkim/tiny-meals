@@ -30,6 +30,14 @@
             border-color: #BF3143 !important;
         }
 
+        .assignment-pill:focus {
+            border-color: #E5E7EB !important;
+        }
+
+        .assignment-pill.active:focus {
+            border-color: #E5E7EB !important;
+        }
+
         /* ==================== ONBOARDING ==================== */
         .onboarding {
             min-height: 100vh;
@@ -1056,7 +1064,7 @@
 
                 <div class="task-input-container">
                     <div class="task-input-row">
-                        <input type="text" id="taskInput" class="task-input" placeholder="What's the next tiny win?" onkeypress="if(event.key==='Enter') addTask()">
+                        <input type="text" id="taskInput" class="task-input" placeholder="What's the next tiny win?" onkeypress="if(event.key==='Enter') addTask()" spellcheck="true">
 
                         <div class="input-controls">
                             <!-- Assignment Pills -->
@@ -1119,7 +1127,7 @@
 
                 <div class="task-input-container">
                     <div class="task-input-row">
-                        <input type="text" id="futureTaskInput" class="task-input" placeholder="Add a future task..." onkeypress="if(event.key==='Enter') addFutureTask()">
+                        <input type="text" id="futureTaskInput" class="task-input" placeholder="Add a future task..." onkeypress="if(event.key==='Enter') addFutureTask()" spellcheck="true">
 
                         <div class="input-controls">
                             <!-- Assignment Pills -->
@@ -1219,16 +1227,16 @@
                     <p style="margin: 0 0 16px 0; font-size: 14px; color: #64748b; line-height: 1.5;">Use a sync code to access your data across devices and browsers.</p>
 
                     <button class="btn-secondary" onclick="showSyncCodeCard()" style="width: 100%; margin-bottom: 12px;">Show My Sync Code</button>
-                    <div id="syncCodeCard" style="padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f0f4f3; margin-bottom: 12px; display: none; align-items: center; gap: 15px; min-height: 56px;">
+                    <div id="syncCodeCard" style="padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f9fafb; margin-bottom: 12px; display: none; align-items: center; gap: 15px; min-height: 56px;">
                         <div style="flex: 1; min-width: 0;">
-                            <div id="syncCodeDisplay" style="font-family: monospace; color: #1e293b; word-break: break-all; font-size: 15px; line-height: 1.4;"></div>
+                            <div id="syncCodeDisplay" style="font-family: monospace; color: #111827; word-break: break-all; font-size: 15px; line-height: 1.4;"></div>
                         </div>
-                        <button onclick="copySyncCode()" style="padding: 12px 20px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; background: #BF3143; color: #fff; cursor: pointer;">Copy</button>
+                        <button data-sync-copy="card" onclick="copySyncCode()" style="padding: 12px 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; background: #BF3143; color: #fff; cursor: pointer; transition: background 0.2s; min-width: 80px; display: flex; align-items: center; justify-content: center;">Copy</button>
                     </div>
 
-                    <div style="padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f0f4f3; display: flex; align-items: center; gap: 15px; min-height: 56px; margin-top: 12px;">
-                        <input id="enterSyncCodeInput" type="text" placeholder="Enter sync code from another device" style="flex: 1; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; min-width: 0; background: white; outline: none;">
-                        <button onclick="submitSyncCode()" style="padding: 12px 20px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; background: #f0f4f3; color: #64748b; cursor: pointer;">Link</button>
+                    <div style="padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f9fafb; display: flex; align-items: center; gap: 15px; min-height: 56px; margin-top: 12px;">
+                        <input id="enterSyncCodeInput" type="text" placeholder="Enter sync code from another device or browser" style="flex: 1; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; min-width: 0; background: white; outline: none; box-shadow: none;">
+                        <button data-sync-link="card" onclick="submitSyncCode()" style="padding: 12px 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; background: #eef2f7; color: #5b6474; cursor: pointer; transition: background 0.2s; min-width: 80px; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1;">Link</button>
                     </div>
                 </div>
 
@@ -1314,7 +1322,7 @@
             <button class="modal-close" aria-label="Close" onclick="closeNoteModal()">&times;</button>
             <h3 class="modal-title">Add a note</h3>
             <p class="modal-subtitle">Optional - visible to both partners</p>
-            <textarea id="noteInput" class="modal-textarea" placeholder="What happened? Any context to share?"></textarea>
+            <textarea id="noteInput" class="modal-textarea" placeholder="What happened? Any context to share?" spellcheck="true"></textarea>
             <div class="modal-actions">
                 <button class="modal-btn modal-btn-primary" onclick="saveNote()">Save</button>
             </div>
@@ -1478,6 +1486,9 @@
             document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
             document.getElementById('view-' + viewName).classList.add('active');
 
+            // Update assignment pills with current names
+            updateAssignmentPills();
+
             if (viewName === 'today') renderTasks();
             if (viewName === 'future') renderFutureTasks();
             if (viewName === 'all') renderAllTasks();
@@ -1597,24 +1608,80 @@
             }
         }
 
-        function copySyncCode() {
+        async function copySyncCode() {
             const code = getSyncCode();
-            if (code) {
-                navigator.clipboard.writeText(code).then(() => {
-                    alert('Sync code copied to clipboard!');
-                });
+            if (!code) return;
+
+            let success = false;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(code);
+                    success = true;
+                }
+            } catch (e) {
+                success = false;
             }
+
+            // Fallback for mobile/Safari if clipboard API fails
+            if (!success) {
+                success = fallbackCopyText(code);
+            }
+
+            if (success) {
+                setCopyButtonsState('Copied', '#333', '#eef2f7', 'none');
+                setTimeout(() => setCopyButtonsState('Copy', '#fff', '#BF3143', 'none'), 1200);
+            }
+        }
+
+        // Fallback copy for browsers without navigator.clipboard (mobile/Safari)
+        function fallbackCopyText(text) {
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'absolute';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                textarea.setSelectionRange(0, text.length);
+                const ok = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                return ok;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        function setCopyButtonsState(text, color, bg, border) {
+            const buttons = document.querySelectorAll('[data-sync-copy]');
+            buttons.forEach(btn => {
+                if (text !== undefined) btn.textContent = text;
+                if (color !== undefined) btn.style.color = color;
+                if (bg !== undefined) btn.style.background = bg;
+                if (border !== undefined) btn.style.border = border;
+            });
+        }
+
+        function setLinkButtonsState(text, color, bg, border) {
+            const buttons = document.querySelectorAll('[data-sync-link]');
+            buttons.forEach(btn => {
+                if (text !== undefined) btn.textContent = text;
+                if (color !== undefined) btn.style.color = color;
+                if (bg !== undefined) btn.style.background = bg;
+                if (border !== undefined) btn.style.border = border;
+            });
         }
 
         function submitSyncCode() {
             const input = document.getElementById('enterSyncCodeInput');
-            const code = input.value.trim();
-            if (code) {
-                setSyncCodeValue(code);
-                input.value = '';
-                alert('Sync code linked successfully!');
+            if (!input) return;
+            const code = input.value.trim().toLowerCase();
+            if (setSyncCodeValue(code)) {
+                setLinkButtonsState('Linked', '#fff', '#BF3143', 'none');
+                // Keep the linked state visible for 3 seconds, then reload to pull data
+                setTimeout(() => location.reload(), 3000);
             } else {
-                alert('Please enter a sync code');
+                setLinkButtonsState('Link', '#5b6474', '#eef2f7', 'none');
             }
         }
 
@@ -1634,8 +1701,8 @@
 
         function updateAssignmentPills() {
             // Update pills in Now view
-            const meBtn = document.querySelector('#view-now .assignment-pill[data-assignment="me"]');
-            const partnerBtn = document.querySelector('#view-now .assignment-pill[data-assignment="partner"]');
+            const meBtn = document.querySelector('#view-today .assignment-pill[data-assignment="me"]');
+            const partnerBtn = document.querySelector('#view-today .assignment-pill[data-assignment="partner"]');
 
             if (meBtn) {
                 if (state.currentUser && state.currentUser.name) {
@@ -2142,8 +2209,7 @@
                 </div>`
                 : '';
 
-            // Hide priority star for future tasks
-            const priorityBtn = task.isFuture ? '' : `
+            const priorityBtn = `
                 <button class="priority-btn ${task.priority ? 'active' : ''}" onclick="togglePriority(${task.id}, event)" aria-label="Mark as priority">
                     <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -2185,7 +2251,10 @@
         function renderAllTasks() {
             const container = document.getElementById('allTasksList');
 
-            if (state.tasks.length === 0) {
+            // Get all completed tasks
+            const completedTasks = state.tasks.filter(t => t.completed && t.completed_at);
+
+            if (completedTasks.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">
@@ -2196,31 +2265,39 @@
                                 <line x1="4" y1="21" x2="20" y2="21" stroke-linecap="round"/>
                             </svg>
                         </div>
-                        <div class="empty-state-text">No tasks yet</div>
+                        <div class="empty-state-text">No completed tasks yet</div>
                     </div>
                 `;
                 return;
             }
 
-            const grouped = {
-                once: state.tasks.filter(t => t.frequency === 'once'),
-                daily: state.tasks.filter(t => t.frequency === 'daily'),
-                weekly: state.tasks.filter(t => t.frequency === 'weekly'),
-                monthly: state.tasks.filter(t => t.frequency === 'monthly')
-            };
+            // Sort by completion date (newest first)
+            completedTasks.sort((a, b) => b.completed_at - a.completed_at);
 
-            let html = '';
-
-            Object.entries(grouped).forEach(([freq, tasks]) => {
-                if (tasks.length > 0) {
-                    const title = freq.charAt(0).toUpperCase() + freq.slice(1);
-                    html += `
-                        <div class="task-section">
-                            <h2 class="section-title">${title}</h2>
-                            ${tasks.map(task => renderTaskCard(task)).join('')}
-                        </div>
-                    `;
+            // Group by date
+            const groupedByDate = {};
+            completedTasks.forEach(task => {
+                const date = new Date(task.completed_at);
+                const dateKey = date.toDateString();
+                if (!groupedByDate[dateKey]) {
+                    groupedByDate[dateKey] = [];
                 }
+                groupedByDate[dateKey].push(task);
+            });
+
+            // Render grouped tasks
+            let html = '';
+            Object.entries(groupedByDate).forEach(([dateKey, tasks]) => {
+                const date = new Date(dateKey);
+                const isToday = dateKey === new Date().toDateString();
+                const formattedDate = isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+                html += `
+                    <div class="task-section">
+                        <h2 class="section-title">${formattedDate}</h2>
+                        ${tasks.map(task => renderTaskCard(task)).join('')}
+                    </div>
+                `;
             });
 
             container.innerHTML = html;
