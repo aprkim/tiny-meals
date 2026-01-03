@@ -2689,12 +2689,18 @@
             if (doc.exists) {
                 const remoteData = doc.data();
 
+                console.log('📥 Firebase snapshot received, tasks:', remoteData.tasks?.length || 0);
+
                 // Apply remote data
                 if (remoteData.space) state.space = remoteData.space;
                 if (remoteData.tasks) state.tasks = remoteData.tasks;
 
                 normalizeTaskAssignments();
                 updateAssignmentPills();
+
+                // Save to localStorage after syncing from Firebase
+                localStorage.setItem(STORAGE_KEYS.SPACE, JSON.stringify(state.space));
+                localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(state.tasks));
 
                 // Refresh all views
                 renderTasks();
@@ -2720,8 +2726,12 @@
 
       // Save to Firestore
       async function saveToFirestore() {
-        if (!firebaseReady || !syncCode) return;
+        if (!firebaseReady || !syncCode) {
+          console.warn('⚠️ Cannot save: firebaseReady=' + firebaseReady + ', syncCode=' + syncCode);
+          return;
+        }
 
+        console.log('💾 Saving to Firestore... tasks:', state.tasks.length);
         try {
           await db.collection('tinyNudge').doc(syncCode).set({
             space: state.space,
