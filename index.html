@@ -1498,6 +1498,9 @@
             localStorage.setItem(STORAGE_KEYS.SPACE, JSON.stringify(state.space));
             localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(state.currentUser));
             localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(state.tasks));
+
+            // Sync to Firebase
+            saveToFirestore();
         }
 
         // ==================== ONBOARDING ====================
