@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Tiny Nudge – Shared tasks for couples</title>
-    <!-- Build: 2025-12-25-v4-share-feature -->
+    <!-- Build: 2026-01-04-v6-task-sorting-fixed -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
     <meta property="og:title" content="Tiny Nudge">
@@ -2358,12 +2358,13 @@
             const activeTasks = state.tasks.filter(t => !t.completed && !t.isFuture);
             const completedTasks = state.tasks.filter(t => t.completed && !t.isFuture);
 
-            // Sort active tasks: priority tasks first, then by creation time (newest first)
+            // Sort active tasks: priority (starred) tasks first, then oldest first
             activeTasks.sort((a, b) => {
                 if (a.priority && !b.priority) return -1;
                 if (!a.priority && b.priority) return 1;
-                return b.created_at - a.created_at; // Changed to show newest first
+                return a.created_at - b.created_at; // Oldest first
             });
+            console.log('📋 Sorted tasks:', activeTasks.map(t => ({ text: t.text, priority: t.priority, created: new Date(t.created_at).toLocaleTimeString() })));
 
             const activeContainer = document.getElementById('activeTasks');
             const completedContainer = document.getElementById('completedTasks');
@@ -2544,8 +2545,12 @@
                 return;
             }
 
-            // Sort by creation date
-            const sortedTasks = [...futureTasks].sort((a, b) => a.created_at - b.created_at);
+            // Sort future tasks: priority (starred) tasks first, then oldest first
+            const sortedTasks = [...futureTasks].sort((a, b) => {
+                if (a.priority && !b.priority) return -1;
+                if (!a.priority && b.priority) return 1;
+                return a.created_at - b.created_at; // Oldest first
+            });
 
             container.innerHTML = sortedTasks.map(task => renderTaskCard(task)).join('');
         }
