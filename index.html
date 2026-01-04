@@ -2092,7 +2092,8 @@
                 created_by: state.currentUser.name
             };
 
-            state.tasks.push(task);
+            // Add to beginning of array so it appears at top immediately
+            state.tasks.unshift(task);
             saveState();
 
             // Reset input
@@ -2117,7 +2118,7 @@
             document.getElementById('dateLabel').textContent = '';
             document.getElementById('inputDate').classList.remove('active');
 
-            renderTasks();
+            renderTasks(true); // Skip sorting so new task stays at top
         }
 
         function setFutureAssignment(assignment) {
@@ -2182,7 +2183,8 @@
                 isFuture: true
             };
 
-            state.tasks.push(task);
+            // Add to beginning of array so it appears at top immediately
+            state.tasks.unshift(task);
             saveState();
 
             input.value = '';
@@ -2206,7 +2208,7 @@
             document.getElementById('futureDateLabel').textContent = '';
             document.getElementById('futureInputDate').classList.remove('active');
 
-            renderFutureTasks();
+            renderFutureTasks(true); // Skip sorting so new task stays at top
         }
 
         function toggleTask(taskId) {
@@ -2352,19 +2354,22 @@
             renderTasks();
         }
 
-        function renderTasks() {
+        function renderTasks(skipSort = false) {
             const today = new Date().toDateString();
 
             const activeTasks = state.tasks.filter(t => !t.completed && !t.isFuture);
             const completedTasks = state.tasks.filter(t => t.completed && !t.isFuture);
 
             // Sort active tasks: priority (starred) tasks first, then oldest first
-            activeTasks.sort((a, b) => {
-                if (a.priority && !b.priority) return -1;
-                if (!a.priority && b.priority) return 1;
-                return a.created_at - b.created_at; // Oldest first
-            });
-            console.log('📋 Sorted tasks:', activeTasks.map(t => ({ text: t.text, priority: t.priority, created: new Date(t.created_at).toLocaleTimeString() })));
+            // Skip sorting when we just added a task (so it stays at top)
+            if (!skipSort) {
+                activeTasks.sort((a, b) => {
+                    if (a.priority && !b.priority) return -1;
+                    if (!a.priority && b.priority) return 1;
+                    return a.created_at - b.created_at; // Oldest first
+                });
+                console.log('📋 Sorted tasks:', activeTasks.map(t => ({ text: t.text, priority: t.priority, created: new Date(t.created_at).toLocaleTimeString() })));
+            }
 
             const activeContainer = document.getElementById('activeTasks');
             const completedContainer = document.getElementById('completedTasks');
@@ -2526,7 +2531,7 @@
             container.innerHTML = html;
         }
 
-        function renderFutureTasks() {
+        function renderFutureTasks(skipSort = false) {
             const container = document.getElementById('futureTasks');
             const futureTasks = state.tasks.filter(t => t.isFuture);
 
@@ -2546,11 +2551,15 @@
             }
 
             // Sort future tasks: priority (starred) tasks first, then oldest first
-            const sortedTasks = [...futureTasks].sort((a, b) => {
-                if (a.priority && !b.priority) return -1;
-                if (!a.priority && b.priority) return 1;
-                return a.created_at - b.created_at; // Oldest first
-            });
+            // Skip sorting when we just added a task (so it stays at top)
+            let sortedTasks = futureTasks;
+            if (!skipSort) {
+                sortedTasks = [...futureTasks].sort((a, b) => {
+                    if (a.priority && !b.priority) return -1;
+                    if (!a.priority && b.priority) return 1;
+                    return a.created_at - b.created_at; // Oldest first
+                });
+            }
 
             container.innerHTML = sortedTasks.map(task => renderTaskCard(task)).join('');
         }
