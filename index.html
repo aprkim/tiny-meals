@@ -2921,11 +2921,6 @@
       }
 
       function importData() {
-        if (!auth.currentUser) {
-          showAlert('Please sign in first');
-          return;
-        }
-
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
