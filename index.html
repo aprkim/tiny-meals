@@ -2625,7 +2625,25 @@
 
       // Settings functions
       function generateSyncCode() {
-        return Math.random().toString(36).substring(2, 8).toUpperCase();
+        const adjectives = [
+          'thunder', 'dragon', 'forest', 'mountain', 'ocean', 'crystal', 'golden', 'silver',
+          'cosmic', 'lunar', 'solar', 'mystic', 'swift', 'bright', 'dark', 'wild',
+          'ancient', 'frozen', 'blazing', 'hidden', 'sacred', 'noble', 'royal', 'brave'
+        ];
+        const nouns = [
+          'harbor', 'apple', 'river', 'phoenix', 'wolf', 'eagle', 'tiger', 'bear',
+          'storm', 'valley', 'peak', 'wave', 'star', 'moon', 'sun', 'cloud',
+          'flame', 'wind', 'stone', 'tree', 'flower', 'sword', 'shield', 'crown'
+        ];
+
+        const getRandomWord = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        const words = [];
+        for (let i = 0; i < 6; i++) {
+          words.push(i % 2 === 0 ? getRandomWord(adjectives) : getRandomWord(nouns));
+        }
+
+        return words.join('-');
       }
 
       function ensureSyncCode() {
