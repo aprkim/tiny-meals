@@ -2942,7 +2942,7 @@
               `This will import ${data.recipes.length} recipes and ${data.ideas.length} ideas. Existing data will not be deleted.`,
               async () => {
                 try {
-                  const userId = auth.currentUser?.uid;
+                  const userId = currentUser?.uid;
                   if (!userId) {
                     showAlert('Not signed in. Please refresh and try again.');
                     return;
