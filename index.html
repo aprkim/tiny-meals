@@ -1944,6 +1944,29 @@
             </div>
 
             <div class="form-group">
+                <label class="form-label">Photo (optional)</label>
+                <input type="file" id="editIdeaPhotoInput" accept="image/*" style="display: none;">
+                <div id="editIdeaPhotoPreview" style="margin-bottom: 12px; display: none;">
+                    <div style="display: flex; align-items: flex-start; gap: 16px; background: #f8fafc; padding: 12px; border-radius: 12px;">
+                        <img style="width: 150px; height: 150px; border-radius: 8px; object-fit: cover; flex-shrink: 0;">
+                        <button type="button" onclick="removeEditIdeaPhoto()" style="background: #ef4444; border: none; border-radius: 8px; width: 40px; height: 40px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 4px;">
+                            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2;">
+                                <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
+                                <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" style="width: 100%;" onclick="document.getElementById('editIdeaPhotoInput').click()">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; display: inline-block; vertical-align: middle; margin-right: 8px; pointer-events: none;">
+                        <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span id="editIdeaPhotoButtonText">Choose Photo</span>
+                </button>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label">Tags (optional)</label>
                 <input type="text" class="form-input" id="editIdeaTags" placeholder="Tags (comma-separated)" spellcheck="true">
             </div>
@@ -2397,18 +2420,65 @@
         );
       };
 
+      let currentEditIdeaPhoto = null;
+      let currentEditIdeaPhotoUrl = null;
+      let shouldDeleteIdeaPhoto = false;
+
       window.editIdea = async (id) => {
         const doc = await db.collection('ideas').doc(id).get();
         if (!doc.exists) return;
 
         const idea = doc.data();
+
+        // Reset photo state
+        currentEditIdeaPhoto = null;
+        currentEditIdeaPhotoUrl = null;
+        shouldDeleteIdeaPhoto = false;
+
         document.getElementById('editIdeaId').value = id;
         document.getElementById('editIdeaNote').value = idea.note || '';
         document.getElementById('editIdeaLink').value = idea.link || '';
         document.getElementById('editIdeaTags').value = idea.tags?.join(', ') || '';
 
+        // Show existing photo if available
+        const preview = document.getElementById('editIdeaPhotoPreview');
+        if (idea.photo_url) {
+          currentEditIdeaPhotoUrl = idea.photo_url;
+          preview.querySelector('img').src = currentEditIdeaPhotoUrl;
+          preview.style.display = 'block';
+          document.getElementById('editIdeaPhotoButtonText').textContent = 'Change Photo';
+        } else {
+          preview.style.display = 'none';
+          document.getElementById('editIdeaPhotoButtonText').textContent = 'Choose Photo';
+        }
+
         document.getElementById('editIdeaModal').classList.add('active');
       };
+
+      window.removeEditIdeaPhoto = () => {
+        shouldDeleteIdeaPhoto = true;
+        currentEditIdeaPhoto = null;
+        currentEditIdeaPhotoUrl = null;
+        document.getElementById('editIdeaPhotoPreview').style.display = 'none';
+        document.getElementById('editIdeaPhotoButtonText').textContent = 'Choose Photo';
+      };
+
+      // Handle photo selection for edit idea
+      document.getElementById('editIdeaPhotoInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          currentEditIdeaPhoto = file;
+          shouldDeleteIdeaPhoto = false;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const preview = document.getElementById('editIdeaPhotoPreview');
+            preview.querySelector('img').src = e.target.result;
+            preview.style.display = 'block';
+            document.getElementById('editIdeaPhotoButtonText').textContent = 'Change Photo';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
 
       window.saveIdeaEdit = async () => {
         const id = document.getElementById('editIdeaId').value;
@@ -2419,15 +2489,30 @@
           .map(t => t.trim().toLowerCase())
           .filter(t => t);
 
-        if (!note && !link) {
-          alert('Please add a note or link');
+        if (!note && !link && !currentEditIdeaPhoto && !currentEditIdeaPhotoUrl) {
+          alert('Please add a note, link, or photo');
           return;
         }
+
+        // Handle photo changes
+        let photoUrl = null;
+        if (currentEditIdeaPhoto) {
+          // Upload new photo
+          const storageRef = storage.ref();
+          const photoRef = storageRef.child(`ideas/${currentUser.uid}/${Date.now()}_${currentEditIdeaPhoto.name}`);
+          await photoRef.put(currentEditIdeaPhoto);
+          photoUrl = await photoRef.getDownloadURL();
+        } else if (!shouldDeleteIdeaPhoto && currentEditIdeaPhotoUrl) {
+          // Keep existing photo
+          photoUrl = currentEditIdeaPhotoUrl;
+        }
+        // If shouldDeleteIdeaPhoto is true and no new photo, photoUrl stays null
 
         await db.collection('ideas').doc(id).update({
           note,
           link: link || null,
-          tags
+          tags,
+          photo_url: photoUrl
         });
 
         document.getElementById('editIdeaModal').classList.remove('active');
