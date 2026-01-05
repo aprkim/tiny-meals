@@ -1926,6 +1926,35 @@
         </div>
     </div>
 
+    <!-- ==================== EDIT IDEA MODAL ==================== -->
+    <div id="editIdeaModal" class="modal-overlay" onclick="if(event.target === this) closeEditIdea()">
+        <div class="modal" style="max-width: 600px;">
+            <button class="modal-close" onclick="closeEditIdea()">&times;</button>
+            <h2 class="modal-title" style="margin-bottom: 20px;">Edit Idea</h2>
+            <input type="hidden" id="editIdeaId">
+
+            <div class="form-group">
+                <label class="form-label">Note</label>
+                <textarea class="form-input" id="editIdeaNote" placeholder="Recipe idea or quick note..." rows="3" style="resize: vertical;" spellcheck="true"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Link (optional)</label>
+                <input type="url" class="form-input" id="editIdeaLink" placeholder="Recipe URL (optional)">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tags (optional)</label>
+                <input type="text" class="form-input" id="editIdeaTags" placeholder="Tags (comma-separated)" spellcheck="true">
+            </div>
+
+            <div class="modal-actions" style="display: flex; gap: 12px; margin-top: 24px;">
+                <button class="btn-primary" onclick="saveIdeaEdit()" style="flex: 1;">Save</button>
+                <button class="btn-secondary" onclick="closeEditIdea()" style="flex: 1;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== SELECT RECIPE MODAL ==================== -->
     <div class="modal-overlay" id="selectRecipeModal">
         <div class="modal">
@@ -2300,27 +2329,34 @@
       function createIdeaCard(id, idea) {
         const card = document.createElement('div');
         card.className = 'idea-card';
-        
+        card.style.position = 'relative';
+
         let contentHTML = '';
         if (idea.note) contentHTML += `<div class="idea-card-value">${idea.note}</div>`;
-        
+
         if (idea.link) {
           contentHTML += `<a href="${idea.link}" target="_blank" class="idea-card-link" style="display: block; margin-top: 8px; color: #475569; text-decoration: underline;">${idea.link}</a>`;
         }
-        
+
         if (idea.photo_url) {
           contentHTML += `<img src="${idea.photo_url}" class="idea-card-photo" style="max-width: 500px; max-height: 500px; width: 100%; border-radius: 8px; margin-top: 8px; object-fit: contain;">`;
         }
-        
+
         const tagsHTML = idea.tags?.length > 0
           ? idea.tags.map(t => `<span class="tag">${t}</span>`).join('')
           : '';
-          
+
         card.innerHTML = `
+          <button onclick="deleteIdea('${id}')" style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; cursor: pointer; padding: 4px; color: #94A3B8; opacity: 0.6; transition: all 0.2s; display: flex; align-items: center; justify-content: center; z-index: 10;" onmouseover="this.style.color='#BF3143'; this.style.opacity='1'" onmouseout="this.style.color='#94A3B8'; this.style.opacity='0.6'">
+            <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;">
+              <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
+              <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
+            </svg>
+          </button>
           ${contentHTML}
           ${tagsHTML ? `<div style="margin-top: 8px;">${tagsHTML}</div>` : ''}
           <div class="idea-card-actions" style="margin-top: 12px; display: flex; gap: 8px;">
-            <button class="btn-small btn-delete" onclick="deleteIdea('${id}')">Delete</button>
+            <button class="btn-small btn-secondary" onclick="editIdea('${id}')">Edit</button>
           </div>
         `;
         return card;
@@ -2359,6 +2395,46 @@
           },
           'Delete'
         );
+      };
+
+      window.editIdea = async (id) => {
+        const doc = await db.collection('ideas').doc(id).get();
+        if (!doc.exists) return;
+
+        const idea = doc.data();
+        document.getElementById('editIdeaId').value = id;
+        document.getElementById('editIdeaNote').value = idea.note || '';
+        document.getElementById('editIdeaLink').value = idea.link || '';
+        document.getElementById('editIdeaTags').value = idea.tags?.join(', ') || '';
+
+        document.getElementById('editIdeaModal').classList.add('active');
+      };
+
+      window.saveIdeaEdit = async () => {
+        const id = document.getElementById('editIdeaId').value;
+        const note = document.getElementById('editIdeaNote').value.trim();
+        const link = document.getElementById('editIdeaLink').value.trim();
+        const tags = document.getElementById('editIdeaTags').value
+          .split(',')
+          .map(t => t.trim().toLowerCase())
+          .filter(t => t);
+
+        if (!note && !link) {
+          alert('Please add a note or link');
+          return;
+        }
+
+        await db.collection('ideas').doc(id).update({
+          note,
+          link: link || null,
+          tags
+        });
+
+        document.getElementById('editIdeaModal').classList.remove('active');
+      };
+
+      window.closeEditIdea = () => {
+        document.getElementById('editIdeaModal').classList.remove('active');
       };
 
       window.deleteRecipe = async (id) => {
