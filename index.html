@@ -1438,13 +1438,6 @@
                 <!-- Tag Filters -->
                 <div class="filter-bar" id="recipeFilters">
                     <span class="tag clickable active" data-filter="all">All</span>
-                    <span class="tag clickable" data-filter="chicken">chicken</span>
-                    <span class="tag clickable" data-filter="beef">beef</span>
-                    <span class="tag clickable" data-filter="fish">fish</span>
-                    <span class="tag clickable" data-filter="veggie">veggie</span>
-                    <span class="tag clickable" data-filter="pasta">pasta</span>
-                    <span class="tag clickable" data-filter="quick">quick</span>
-                    <span class="tag clickable" data-filter="guest-friendly">guest-friendly</span>
                 </div>
 
                 <!-- Recipes List -->
@@ -3217,11 +3210,40 @@
             if (snapshot.empty) {
                 list.innerHTML = '';
                 empty.style.display = 'block';
+                // Clear filters except "All"
+                const filterBar = document.getElementById('recipeFilters');
+                filterBar.innerHTML = '<span class="tag clickable active" data-filter="all">All</span>';
                 return;
             }
 
             empty.style.display = 'none';
             list.innerHTML = '';
+
+            // Collect all unique tags from recipes
+            const allTags = new Set();
+            snapshot.forEach(doc => {
+                const recipe = doc.data();
+                if (recipe.tags && Array.isArray(recipe.tags)) {
+                    recipe.tags.forEach(tag => allTags.add(tag));
+                }
+            });
+
+            // Update filter bar with actual tags
+            const filterBar = document.getElementById('recipeFilters');
+            filterBar.innerHTML = '<span class="tag clickable active" data-filter="all">All</span>';
+            Array.from(allTags).sort().forEach(tag => {
+                filterBar.innerHTML += `<span class="tag clickable" data-filter="${tag}">${tag}</span>`;
+            });
+
+            // Re-attach click handlers for filters
+            filterBar.querySelectorAll('.tag.clickable').forEach(tag => {
+                tag.addEventListener('click', () => {
+                    filterBar.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+                    tag.classList.add('active');
+                    const filter = tag.getAttribute('data-filter');
+                    filterRecipes(filter);
+                });
+            });
 
             snapshot.forEach(doc => {
                 const recipe = { id: doc.id, ...doc.data() };
@@ -3275,6 +3297,18 @@
               });
               initializeWeeklyPlanning();
             });
+      }
+
+      function filterRecipes(filter) {
+        const cards = document.querySelectorAll('#recipesList .card');
+        cards.forEach(card => {
+          if (filter === 'all') {
+            card.style.display = '';
+          } else {
+            const tags = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent);
+            card.style.display = tags.includes(filter) ? '' : 'none';
+          }
+        });
       }
 
       // Placeholder functions
