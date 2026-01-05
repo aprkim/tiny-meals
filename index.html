@@ -2942,7 +2942,12 @@
               `This will import ${data.recipes.length} recipes and ${data.ideas.length} ideas. Existing data will not be deleted.`,
               async () => {
                 try {
-                  const userId = currentUser?.uid;
+                  // Try multiple ways to get the user ID
+                  const userId = currentUser?.uid || auth.currentUser?.uid;
+                  console.log('Import - currentUser:', currentUser);
+                  console.log('Import - auth.currentUser:', auth.currentUser);
+                  console.log('Import - userId:', userId);
+
                   if (!userId) {
                     showAlert('Not signed in. Please refresh and try again.');
                     return;
