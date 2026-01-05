@@ -3035,7 +3035,21 @@
       }
 
       function showAlert(message) {
-        alert(message);
+        document.getElementById('confirmTitle').textContent = 'meals.tinywins.space says';
+        document.getElementById('confirmSubtitle').textContent = message;
+
+        const btn = document.getElementById('confirmBtn');
+        btn.textContent = 'OK';
+        btn.onclick = () => {
+          closeConfirmModal();
+        };
+
+        // Hide cancel button for alerts
+        const modal = document.getElementById('confirmModal');
+        const cancelBtn = modal.querySelector('.modal-btn-secondary');
+        if (cancelBtn) cancelBtn.style.display = 'none';
+
+        modal.classList.add('active');
       }
 
       window.showSyncCodeCard = showSyncCodeCard;
