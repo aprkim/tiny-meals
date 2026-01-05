@@ -3210,9 +3210,9 @@
             if (snapshot.empty) {
                 list.innerHTML = '';
                 empty.style.display = 'block';
-                // Clear filters except "All"
+                // Hide all filters when empty
                 const filterBar = document.getElementById('recipeFilters');
-                filterBar.innerHTML = '<span class="tag clickable active" data-filter="all">All</span>';
+                filterBar.innerHTML = '';
                 return;
             }
 
