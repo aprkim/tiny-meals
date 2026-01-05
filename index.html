@@ -3555,24 +3555,30 @@
       auth.onAuthStateChanged((user) => {
         if (user) {
           currentUser = user;
-          onboardingView.style.display = 'none';
-          mainApp.classList.add('active');
 
-          // Load data
-          loadIdeas();
-          loadRecipes();
-          loadHistory();
+          // Check if user has completed onboarding
+          const savedSpace = localStorage.getItem(STORAGE_KEYS.SPACE);
+          if (savedSpace) {
+            // User has completed onboarding, show main app
+            onboardingView.style.display = 'none';
+            mainApp.classList.add('active');
 
-          // Load all recipes for planning
-          db.collection('recipes')
-            .where('user_id', '==', user.uid)
-            .onSnapshot((snapshot) => {
-              allRecipes = [];
-              snapshot.forEach((doc) => {
-                allRecipes.push({ id: doc.id, ...doc.data() });
+            // Load data
+            loadIdeas();
+            loadRecipes();
+            loadHistory();
+
+            // Load all recipes for planning
+            db.collection('recipes')
+              .where('user_id', '==', user.uid)
+              .onSnapshot((snapshot) => {
+                allRecipes = [];
+                snapshot.forEach((doc) => {
+                  allRecipes.push({ id: doc.id, ...doc.data() });
+                });
+                initializeWeeklyPlanning();
               });
-              initializeWeeklyPlanning();
-            });
+          }
 
           console.log('✅ Logged in:', user.email);
         } else {
