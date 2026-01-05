@@ -2921,6 +2921,11 @@
       }
 
       function importData() {
+        if (!auth.currentUser) {
+          showAlert('Please sign in first');
+          return;
+        }
+
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
@@ -2933,7 +2938,7 @@
             const data = JSON.parse(text);
 
             if (!data.version || !data.recipes || !data.ideas) {
-              showAlert('Invalid backup file format.');
+              showAlert('Invalid backup file format. Missing required fields.');
               return;
             }
 
@@ -2943,32 +2948,42 @@
               async () => {
                 try {
                   const userId = auth.currentUser?.uid;
-                  if (!userId) return;
+                  if (!userId) {
+                    showAlert('Not signed in. Please refresh and try again.');
+                    return;
+                  }
+
+                  let recipesImported = 0;
+                  let ideasImported = 0;
 
                   for (const recipe of data.recipes) {
-                    const { id, ...recipeData } = recipe;
+                    const { id, created_at, ...recipeData } = recipe;
                     recipeData.user_id = userId;
+                    recipeData.created_at = firebase.firestore.FieldValue.serverTimestamp();
                     await db.collection('recipes').add(recipeData);
+                    recipesImported++;
                   }
 
                   for (const idea of data.ideas) {
-                    const { id, ...ideaData } = idea;
+                    const { id, created_at, ...ideaData } = idea;
                     ideaData.user_id = userId;
+                    ideaData.created_at = firebase.firestore.FieldValue.serverTimestamp();
                     await db.collection('ideas').add(ideaData);
+                    ideasImported++;
                   }
 
-                  showAlert('Data imported successfully!');
+                  showAlert(`Successfully imported ${recipesImported} recipes and ${ideasImported} ideas!`);
                   location.reload();
                 } catch (error) {
                   console.error('Import error:', error);
-                  showAlert('Failed to import data. Please try again.');
+                  showAlert('Failed to import data: ' + error.message);
                 }
               },
               'Import'
             );
           } catch (error) {
             console.error('File read error:', error);
-            showAlert('Failed to read backup file.');
+            showAlert('Failed to read file. Please ensure it is a valid JSON file exported from Tiny Meals.');
           }
         };
         input.click();
