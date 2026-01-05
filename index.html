@@ -431,7 +431,7 @@
             padding: 10px 16px;
             background: white;
             color: #64748B;
-            border: 2px solid #E2E8F0;
+            border: 1px solid #e5e7eb;
             border-radius: 10px;
             font-size: 14px;
             font-weight: 600;
@@ -1475,7 +1475,19 @@
                     <p class="header-subtitle">Plan your meals together</p>
                 </div>
 
-                <div class="week-date" id="weekDate">Week of Dec 25, 2025</div>
+                <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px; flex-wrap: nowrap;">
+                    <button onclick="previousWeek()" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s; flex-shrink: 0;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b';" onmouseout="this.style.background='none'; this.style.color='#64748b';">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <div id="weekDate" style="font-size: 14px; font-weight: 600; color: #64748B; text-align: center; white-space: nowrap; flex-shrink: 0;">Week of Dec 25, 2025</div>
+                    <button onclick="nextWeek()" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s; flex-shrink: 0;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b';" onmouseout="this.style.background='none'; this.style.color='#64748b';">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
 
                 <!-- Step 1: Independent Selection -->
                 <div id="selectionStep">
@@ -1613,13 +1625,31 @@
                     <p class="header-subtitle">Manage your meal planning space</p>
                 </div>
 
+                <!-- Space Info Card -->
+                <div class="settings-card" id="spaceInfoCard" style="margin-top: 16px; padding: 20px; background: white; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.04); display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                        <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; color: #BF3143; flex-shrink: 0;">
+                            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span style="margin: 0; font-size: 17px; color: #1e293b; font-weight: 500;" id="spaceNameDisplay"></span>
+                        <input type="text" id="spaceNameInput" class="form-input" style="display: none; margin: 0; padding: 10px 12px; font-size: 17px; font-weight: 500; flex: 1; min-width: 0; height: 40px; box-sizing: border-box;" spellcheck="true">
+                    </div>
+                    <div id="spaceEditButtons" style="flex-shrink: 0;">
+                        <button class="btn-secondary" onclick="editSpaceName()" id="editSpaceBtn" style="padding: 10px 16px; font-size: 14px; height: 40px; box-sizing: border-box;">Edit</button>
+                        <div style="display: none; gap: 8px;" id="spaceSaveButtons">
+                            <button class="btn-secondary" onclick="cancelEditSpaceName()" style="padding: 10px 16px; font-size: 14px; height: 40px; width: 80px; box-sizing: border-box;">Cancel</button>
+                            <button class="btn-primary" onclick="saveSpaceName()" id="saveSpaceBtn" style="padding: 10px 16px; font-size: 14px; height: 40px; width: 80px; box-sizing: border-box;">Save</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Cross-Device Sync Card -->
                 <div class="settings-card" style="margin-top: 16px; padding: 20px; background: white; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
                     <div style="display: flex; align-items: center; gap: 10px; margin: 0 0 8px 0;">
-                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; color: #BF3143;">
+                        <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; color: #BF3143;">
                             <path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #333;">Cross-Device Sync</h3>
+                        <h3 style="margin: 0; font-size: 17px; font-weight: 500; color: #1e293b;">Cross-Device Sync</h3>
                     </div>
                     <p style="margin: 0 0 16px 0; font-size: 14px; color: #64748b; line-height: 1.5;">Use a sync code to access your data across devices and browsers.</p>
 
@@ -1637,26 +1667,26 @@
                         </button>
                     </div>
 
-                    <div id="syncCodeCard" style="padding: 12px 14px; border: 2px solid #cbd5e1; border-radius: 12px; background: #f9fafb; margin-bottom: 12px; display: none; align-items: center; gap: 15px; min-height: 56px;">
+                    <div id="syncCodeCard" style="padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f9fafb; margin-bottom: 12px; display: none; align-items: center; gap: 12px;">
                         <div style="flex: 1; min-width: 0;">
-                            <div id="syncCodeDisplay" style="font-family: monospace; color: #111827; word-break: break-all; font-size: 15px; line-height: 1.4;"></div>
+                            <div id="syncCodeDisplay" style="font-family: monospace; color: #111827; word-break: break-all; font-size: 14px; line-height: 1.3;"></div>
                         </div>
-                        <button onclick="copySyncCode()" style="padding: 12px 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; background: #BF3143; color: #fff; cursor: pointer; transition: background 0.2s; min-width: 80px; display: flex; align-items: center; justify-content: center;">Copy</button>
+                        <button onclick="copySyncCode()" style="padding: 10px 14px; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; background: #BF3143; color: #fff; cursor: pointer; transition: background 0.2s; min-width: 70px; display: flex; align-items: center; justify-content: center;">Copy</button>
                     </div>
 
-                    <div class="sync-input-container" style="padding: 12px 14px; border: 2px solid #cbd5e1; border-radius: 12px; background: #f9fafb; display: flex; align-items: center; gap: 15px; min-height: 56px; margin-top: 12px;">
-                        <input id="enterSyncCodeInput" type="text" placeholder="Enter sync code from another device" style="flex: 1; padding: 12px 14px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 14px; min-width: 0; background: white; outline: none; box-shadow: none;">
+                    <div class="sync-input-container" style="padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f9fafb; display: flex; align-items: center; gap: 15px; min-height: 56px; margin-top: 12px;">
+                        <input id="enterSyncCodeInput" type="text" placeholder="Enter sync code from another device" style="flex: 1; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; min-width: 0; background: white; outline: none; box-shadow: none;">
                         <button onclick="submitSyncCode()" style="padding: 12px 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; background: #eef2f7; color: #5b6474; cursor: pointer; transition: background 0.2s; min-width: 80px; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1;">Link</button>
                     </div>
                 </div>
 
                 <!-- Data Management Card -->
                 <div class="settings-card" style="margin-top: 16px; padding: 20px; background: white; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                    <div style="display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: #333; margin-bottom: 16px;">
-                        <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; color: #BF3143;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                        <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; color: #BF3143;">
                             <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Data Management
+                        <h3 style="margin: 0; font-size: 17px; font-weight: 500; color: #1e293b;">Data Management</h3>
                     </div>
 
                     <div style="margin-bottom: 16px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
@@ -3002,6 +3032,72 @@
         );
       }
 
+      function editSpaceName() {
+        const spaceNameDisplay = document.getElementById('spaceNameDisplay');
+        const spaceNameInput = document.getElementById('spaceNameInput');
+        const editBtn = document.getElementById('editSpaceBtn');
+        const saveButtons = document.getElementById('spaceSaveButtons');
+
+        // Hide display, show input
+        spaceNameDisplay.style.display = 'none';
+        spaceNameInput.style.display = 'block';
+        spaceNameInput.value = spaceNameDisplay.textContent;
+
+        // Hide edit button, show save/cancel buttons
+        editBtn.style.display = 'none';
+        saveButtons.style.display = 'flex';
+
+        // Focus the input
+        spaceNameInput.focus();
+        spaceNameInput.select();
+      }
+
+      function cancelEditSpaceName() {
+        const spaceNameDisplay = document.getElementById('spaceNameDisplay');
+        const spaceNameInput = document.getElementById('spaceNameInput');
+        const editBtn = document.getElementById('editSpaceBtn');
+        const saveButtons = document.getElementById('spaceSaveButtons');
+
+        // Show display, hide input
+        spaceNameDisplay.style.display = 'block';
+        spaceNameInput.style.display = 'none';
+
+        // Show edit button, hide save/cancel buttons
+        editBtn.style.display = 'block';
+        saveButtons.style.display = 'none';
+      }
+
+      function saveSpaceName() {
+        const spaceNameDisplay = document.getElementById('spaceNameDisplay');
+        const spaceNameInput = document.getElementById('spaceNameInput');
+        const saveBtn = document.getElementById('saveSpaceBtn');
+        const newName = spaceNameInput.value.trim();
+
+        if (!newName) {
+          showAlert('Space name cannot be empty.');
+          return;
+        }
+
+        const savedSpace = localStorage.getItem(STORAGE_KEYS.SPACE);
+        const space = {
+          id: savedSpace ? JSON.parse(savedSpace).id : 'space_' + Date.now(),
+          name: newName,
+          created_at: savedSpace ? JSON.parse(savedSpace).created_at : Date.now()
+        };
+
+        localStorage.setItem(STORAGE_KEYS.SPACE, JSON.stringify(space));
+        spaceNameDisplay.textContent = space.name;
+
+        // Show "Saved" on button
+        saveBtn.textContent = 'Saved';
+
+        // Wait a moment before reverting UI
+        setTimeout(() => {
+          cancelEditSpaceName();
+          saveBtn.textContent = 'Save';
+        }, 1000);
+      }
+
       function resetApp() {
         showConfirm(
           'Reset Everything?',
@@ -3325,8 +3421,12 @@
       let nathanPicks = [];
       let currentSelectingUser = null;
       let currentSelectingSlot = null;
+      let weeklyMealPlans = {}; // Store meal plans by week key
 
       function initializeWeeklyPlanning() {
+        // Load saved meal plans from localStorage
+        loadWeekPicks();
+
         // Update week date to show upcoming Sunday
         updateWeekDate();
 
@@ -3338,6 +3438,47 @@
         renderPlanningSlots();
       }
 
+      let weekOffset = 0; // Track how many weeks forward or back from current week
+
+      function getWeekKey() {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+        const upcomingSunday = new Date(today);
+        upcomingSunday.setDate(today.getDate() + daysUntilSunday + (weekOffset * 7));
+
+        // Create a unique key for this week (format: YYYY-MM-DD)
+        const year = upcomingSunday.getFullYear();
+        const month = String(upcomingSunday.getMonth() + 1).padStart(2, '0');
+        const day = String(upcomingSunday.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      function saveCurrentWeekPicks() {
+        const weekKey = getWeekKey();
+        weeklyMealPlans[weekKey] = {
+          aprilPicks: [...aprilPicks],
+          nathanPicks: [...nathanPicks]
+        };
+        localStorage.setItem('weeklyMealPlans', JSON.stringify(weeklyMealPlans));
+      }
+
+      function loadWeekPicks() {
+        const weekKey = getWeekKey();
+        const savedPlans = localStorage.getItem('weeklyMealPlans');
+        if (savedPlans) {
+          weeklyMealPlans = JSON.parse(savedPlans);
+        }
+
+        if (weeklyMealPlans[weekKey]) {
+          aprilPicks = [...weeklyMealPlans[weekKey].aprilPicks];
+          nathanPicks = [...weeklyMealPlans[weekKey].nathanPicks];
+        } else {
+          aprilPicks = [];
+          nathanPicks = [];
+        }
+      }
+
       function updateWeekDate() {
         const today = new Date();
         const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
@@ -3346,7 +3487,7 @@
         const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
 
         const upcomingSunday = new Date(today);
-        upcomingSunday.setDate(today.getDate() + daysUntilSunday);
+        upcomingSunday.setDate(today.getDate() + daysUntilSunday + (weekOffset * 7));
 
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const month = monthNames[upcomingSunday.getMonth()];
@@ -3354,6 +3495,22 @@
         const year = upcomingSunday.getFullYear();
 
         document.getElementById('weekDate').textContent = `Week of ${month} ${day}, ${year}`;
+      }
+
+      function previousWeek() {
+        saveCurrentWeekPicks();
+        weekOffset--;
+        updateWeekDate();
+        loadWeekPicks();
+        renderPlanningSlots();
+      }
+
+      function nextWeek() {
+        saveCurrentWeekPicks();
+        weekOffset++;
+        updateWeekDate();
+        loadWeekPicks();
+        renderPlanningSlots();
       }
 
       function renderPlanningSlots() {
@@ -3514,6 +3671,7 @@
           nathanPicks[currentSelectingSlot] = recipe;
         }
 
+        saveCurrentWeekPicks();
         renderPlanningSlots();
         document.getElementById('selectRecipeModal').classList.remove('active');
 
@@ -3527,6 +3685,7 @@
         } else {
           nathanPicks[index] = null;
         }
+        saveCurrentWeekPicks();
         renderPlanningSlots();
       }
 
@@ -3585,6 +3744,15 @@
           // Load grocery list when navigating to grocery view
           if (targetView === 'groceryView') {
             loadGroceryList();
+          }
+
+          // Update space name when navigating to settings view
+          if (targetView === 'settingsView') {
+            const savedSpace = localStorage.getItem(STORAGE_KEYS.SPACE);
+            if (savedSpace) {
+              const space = JSON.parse(savedSpace);
+              document.getElementById('spaceNameDisplay').textContent = space.name;
+            }
           }
         });
       });
