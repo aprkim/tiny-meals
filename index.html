@@ -176,7 +176,7 @@
         .form-input {
             width: 100%;
             padding: 12px 16px;
-            border: 2px solid #E2E8F0;
+            border: 1px solid #e5e7eb;
             border-radius: 10px;
             font-size: 15px;
             font-family: inherit;
@@ -1382,30 +1382,27 @@
                 <!-- Quick Add Form -->
                 <div class="card" style="margin-bottom: 24px;">
                     <form id="addIdeaForm">
-                        <!-- Note Input (always visible) -->
+                        <!-- Note Input with Photo Button -->
                         <div class="form-group">
-                            <textarea class="form-input" id="ideaNoteInput" placeholder="Recipe idea or quick note..." rows="3" style="resize: vertical;" spellcheck="true" lang="en"></textarea>
+                            <div style="display: flex; gap: 8px; align-items: flex-start;">
+                                <textarea class="form-input" id="ideaNoteInput" placeholder="Recipe idea or quick note..." rows="3" style="resize: vertical; flex: 1;" spellcheck="true" lang="en"></textarea>
+                                <input type="file" id="ideaPhotoInput" accept="image/*" style="display: none;">
+                                <button type="button" class="btn-secondary" id="ideaPhotoButton" style="height: 100%; min-height: 84px; padding: 12px 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('ideaPhotoInput').click()">
+                                    <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; pointer-events: none;">
+                                        <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                        <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="ideaPhotoPreview" style="margin-top: 12px; display: none; position: relative;">
+                                <img style="max-width: 500px; max-height: 500px; width: 100%; border-radius: 8px; display: block; object-fit: contain;">
+                                <button type="button" onclick="removeIdeaPhoto()" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+                            </div>
                         </div>
 
                         <!-- Link Input (optional) -->
                         <div class="form-group">
                             <input type="url" class="form-input" id="ideaLinkInput" placeholder="Recipe URL (optional)">
-                        </div>
-
-                        <!-- Photo Input (optional) -->
-                        <div class="form-group">
-                            <input type="file" id="ideaPhotoInput" accept="image/*" style="display: none;">
-                            <button type="button" class="btn-secondary" id="ideaPhotoButton" style="width: 100%;" onclick="document.getElementById('ideaPhotoInput').click()">
-                                <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; display: inline-block; vertical-align: middle; margin-right: 8px; pointer-events: none;">
-                                    <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                                    <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                </svg>
-                                Add Photo (optional)
-                            </button>
-                            <div id="ideaPhotoPreview" style="margin-top: 12px; display: none; position: relative;">
-                                <img style="max-width: 500px; max-height: 500px; width: 100%; border-radius: 8px; display: block; object-fit: contain;">
-                                <button type="button" onclick="removeIdeaPhoto()" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
-                            </div>
                         </div>
 
                         <!-- Tag Input -->
@@ -1471,7 +1468,7 @@
         <div class="view active" id="planningView">
             <div class="container">
                 <div class="header">
-                    <h1 class="header-title">This Week</h1>
+                    <h1 class="header-title">Weekly Plan</h1>
                     <p class="header-subtitle">Plan your meals together</p>
                 </div>
 
@@ -1875,6 +1872,14 @@
                 <button class="modal-btn-secondary" onclick="closeConfirmModal()" style="padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #f0f4f3; color: #64748b; transition: all 0.2s;">Cancel</button>
                 <button class="modal-btn-primary" id="confirmBtn" style="padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #BF3143; color: white; transition: all 0.2s;">Confirm</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ==================== PHOTO MODAL ==================== -->
+    <div id="photoModal" class="modal-overlay" onclick="if(event.target === this) closePhotoModal()">
+        <div style="position: relative; max-width: 90vw; max-height: 90vh;">
+            <button onclick="closePhotoModal()" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; line-height: 1;">&times;</button>
+            <img id="photoModalImage" src="" style="max-width: 90vw; max-height: 90vh; width: auto; height: auto; border-radius: 8px; display: block;">
         </div>
     </div>
 
@@ -2382,15 +2387,15 @@
         card.className = 'idea-card';
         card.style.position = 'relative';
 
-        let contentHTML = '';
-        if (idea.note) contentHTML += `<div class="idea-card-value">${idea.note}</div>`;
+        const photoHTML = idea.photo_url
+          ? `<img src="${idea.photo_url}" class="idea-card-photo" data-photo-url="${idea.photo_url}" style="width: 120px; height: 120px; border-radius: 8px; object-fit: cover; cursor: pointer; flex-shrink: 0;">`
+          : '';
+
+        let textContentHTML = '';
+        if (idea.note) textContentHTML += `<div class="idea-card-value">${idea.note}</div>`;
 
         if (idea.link) {
-          contentHTML += `<a href="${idea.link}" target="_blank" class="idea-card-link" style="display: block; margin-top: 8px; color: #475569; text-decoration: underline;">${idea.link}</a>`;
-        }
-
-        if (idea.photo_url) {
-          contentHTML += `<img src="${idea.photo_url}" class="idea-card-photo" style="max-width: 500px; max-height: 500px; width: 100%; border-radius: 8px; margin-top: 8px; object-fit: contain;">`;
+          textContentHTML += `<a href="${idea.link}" target="_blank" class="idea-card-link" style="display: block; margin-top: 8px; color: #475569; text-decoration: underline;">${idea.link}</a>`;
         }
 
         const tagsHTML = idea.tags?.length > 0
@@ -2404,12 +2409,26 @@
               <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
             </svg>
           </button>
-          ${contentHTML}
-          ${tagsHTML ? `<div style="margin-top: 8px;">${tagsHTML}</div>` : ''}
-          <div class="idea-card-actions" style="margin-top: 12px; display: flex; gap: 8px;">
-            <button class="btn-small btn-secondary" onclick="editIdea('${id}')">Edit</button>
+          <button class="btn-small btn-secondary" onclick="editIdea('${id}')" style="position: absolute; bottom: 12px; right: 12px;">Edit</button>
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            ${photoHTML}
+            <div style="flex: 1; min-width: 0;">
+              ${textContentHTML}
+              ${tagsHTML ? `<div style="margin-top: 8px;">${tagsHTML}</div>` : ''}
+            </div>
           </div>
         `;
+
+        // Attach click handler to photo after innerHTML is set
+        if (idea.photo_url) {
+          const photo = card.querySelector('.idea-card-photo');
+          if (photo) {
+            photo.addEventListener('click', () => {
+              window.openPhotoModal(idea.photo_url);
+            });
+          }
+        }
+
         return card;
       }
 
@@ -2435,6 +2454,18 @@
 
       function closeConfirmModal() {
         document.getElementById('confirmModal').classList.remove('active');
+      }
+
+      window.openPhotoModal = function(photoUrl) {
+        const modal = document.getElementById('photoModal');
+        const img = document.getElementById('photoModalImage');
+        img.src = photoUrl;
+        modal.classList.add('active');
+      }
+
+      window.closePhotoModal = function() {
+        const modal = document.getElementById('photoModal');
+        modal.classList.remove('active');
       }
 
       window.deleteIdea = async (id) => {
@@ -3610,7 +3641,7 @@
 
         if (!allRecipes || allRecipes.length === 0) {
           list.innerHTML = '<div style="text-align: center; padding: 40px; color: #94A3B8;">No recipes yet. Add some recipes first!</div>';
-          filtersContainer.innerHTML = '<span class="tag clickable active" data-filter="all">All</span>';
+          filtersContainer.innerHTML = '';
         } else {
           // Collect all unique tags from recipes
           const allTags = new Set();
