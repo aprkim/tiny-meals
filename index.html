@@ -331,11 +331,17 @@
             stroke: currentColor;
             stroke-width: 2;
             fill: none;
+            display: block;
+        }
+
+        .nav-tab[data-view="ideasView"] {
+            gap: 1px;
         }
 
         .nav-tab[data-view="ideasView"] svg {
             width: 28.6px;
             height: 28.6px;
+            margin-bottom: -3.3px;
         }
 
         .nav-tab span {
@@ -3491,6 +3497,19 @@
         // Update meal planning titles
         document.getElementById('userPicksTitle').textContent = `${newUserName}'s Picks`;
         document.getElementById('partnerPicksTitle').textContent = `${newPartnerName}'s Picks`;
+
+        // Update sync code in Firestore with new names
+        const syncCode = localStorage.getItem('tinyMeals_syncCode');
+        if (syncCode && currentUser) {
+          db.collection('sync_codes').doc(syncCode).update({
+            user_name: newUserName,
+            partner_name: newPartnerName
+          }).then(() => {
+            console.log('✅ Updated names in sync code');
+          }).catch(error => {
+            console.error('❌ Error updating sync code names:', error);
+          });
+        }
 
         // Show "Saved" on button
         saveBtn.textContent = 'Saved';
