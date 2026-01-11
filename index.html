@@ -1662,19 +1662,18 @@
                         <h3 style="margin: 0; font-size: 17px; font-weight: 500; color: #1e293b;">Your Names</h3>
                     </div>
 
-                    <!-- User Name -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px;">
-                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                    <!-- Names Container - flex on desktop, stack on mobile -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px;">
+                        <!-- User Name -->
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 200px;">
                             <span style="margin: 0; font-size: 15px; color: #64748b; min-width: 80px;">You</span>
                             <span style="margin: 0; font-size: 15px; color: #1e293b; font-weight: 500;" id="userNameDisplay"></span>
                             <input type="text" id="userNameInput" class="form-input" style="display: none; margin: 0; padding: 10px 12px; font-size: 15px; font-weight: 500; flex: 1; min-width: 0; height: 40px; box-sizing: border-box;" spellcheck="true">
                         </div>
-                    </div>
 
-                    <!-- Partner Name -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
-                            <span style="margin: 0; font-size: 15px; color: #64748b; min-width: 80px;">Your partner</span>
+                        <!-- Partner Name -->
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 200px;">
+                            <span style="margin: 0; font-size: 15px; color: #64748b; min-width: 100px;">Your partner</span>
                             <span style="margin: 0; font-size: 15px; color: #1e293b; font-weight: 500;" id="partnerNameDisplay"></span>
                             <input type="text" id="partnerNameInput" class="form-input" style="display: none; margin: 0; padding: 10px 12px; font-size: 15px; font-weight: 500; flex: 1; min-width: 0; height: 40px; box-sizing: border-box;" spellcheck="true">
                         </div>
