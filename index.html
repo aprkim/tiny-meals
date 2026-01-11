@@ -3070,7 +3070,7 @@
           try {
             await navigator.share({
               title: 'Tiny Meals Sync Code',
-              text: `Join my Tiny Meals space!\n\nGo to https://meals.tinywins.space/ and enter this sync code:\n\n${code}`
+              text: `Join my Tiny Meals space\nhttps://meals.tinywins.space/\nCode: ${code}`
             });
           } catch (err) {
             if (err.name !== 'AbortError') {
