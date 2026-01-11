@@ -2609,7 +2609,7 @@
         if (idea.note) textContentHTML += `<div class="idea-card-value">${idea.note}</div>`;
 
         if (idea.link) {
-          textContentHTML += `<a href="${idea.link}" target="_blank" class="idea-card-link" style="display: block; margin-top: 8px; color: #475569; text-decoration: underline;">${idea.link}</a>`;
+          textContentHTML += `<a href="${idea.link}" target="_blank" class="idea-card-link" style="display: block; margin-top: 8px; color: #475569; text-decoration: underline; word-break: break-all; overflow-wrap: break-word;">${idea.link}</a>`;
         }
 
         const tagsHTML = idea.tags?.length > 0
