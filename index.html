@@ -1560,9 +1560,16 @@
         <!-- Weekly Planning View -->
         <div class="view active" id="planningView">
             <div class="container">
-                <div class="header">
-                    <h1 class="header-title">Weekly Plan</h1>
-                    <p class="header-subtitle">Plan your meals together</p>
+                <div class="header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h1 class="header-title">Weekly Plan</h1>
+                        <p class="header-subtitle">Plan your meals together</p>
+                    </div>
+                    <button onclick="refreshPlanningData()" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b';" onmouseout="this.style.background='none'; this.style.color='#64748b';" title="Refresh">
+                        <svg viewBox="0 0 24 24" style="width: 24px; height: 24px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                        </svg>
+                    </button>
                 </div>
 
                 <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px; flex-wrap: nowrap;">
@@ -4494,6 +4501,13 @@
       window.nextWeek = nextWeek;
       window.removeRecipeFromSlot = removeRecipeFromSlot;
       window.removeFromWeekly = removeFromWeekly;
+
+      // Refresh planning data
+      window.refreshPlanningData = function() {
+        loadWeekPicks();
+        renderPlanningSlots();
+        console.log('✅ Planning data refreshed');
+      };
 
       // Generate Grocery List button
       document.getElementById('generateGroceryBtn').addEventListener('click', () => {
