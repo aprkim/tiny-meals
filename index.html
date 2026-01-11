@@ -3980,7 +3980,7 @@
 
       let weekPlanListener = null; // Store listener to unsubscribe when week changes
 
-      function initializeWeeklyPlanning() {
+      async function initializeWeeklyPlanning() {
         // Update user names in the planning view
         const savedSpace = localStorage.getItem(STORAGE_KEYS.SPACE);
         if (savedSpace) {
@@ -3991,14 +3991,14 @@
           }
         }
 
-        // Load saved meal plans from localStorage
-        loadWeekPicks();
+        // Update week date to show upcoming Sunday
+        updateWeekDate();
+
+        // Load saved meal plans from Firestore/localStorage
+        await loadWeekPicks();
 
         // Set up real-time sync for current week
         setupWeekPlanListener();
-
-        // Update week date to show upcoming Sunday
-        updateWeekDate();
 
         if (!allRecipes || allRecipes.length === 0) {
           // Show empty state or initialize with empty slots
@@ -4096,13 +4096,17 @@
         }
       }
 
-      function loadWeekPicks() {
+      async function loadWeekPicks() {
         const weekKey = getWeekKey();
+        const userId = getEffectiveUserId();
+
+        // First try to load from localStorage
         const savedPlans = localStorage.getItem('weeklyMealPlans');
         if (savedPlans) {
           weeklyMealPlans = JSON.parse(savedPlans);
         }
 
+        // If we have data in localStorage for this week, use it temporarily
         if (weeklyMealPlans[weekKey]) {
           aprilPicks = [...weeklyMealPlans[weekKey].aprilPicks];
           nathanPicks = [...weeklyMealPlans[weekKey].nathanPicks];
@@ -4111,6 +4115,37 @@
           aprilPicks = [];
           nathanPicks = [];
           weeklySchedule = Array(7).fill(null);
+        }
+
+        // Then fetch from Firestore to get latest data
+        if (userId) {
+          try {
+            const doc = await db.collection('weekly_plans').doc(`${userId}_${weekKey}`).get();
+            if (doc.exists) {
+              const data = doc.data();
+              console.log('✅ Loaded weekly plan from Firestore:', weekKey);
+
+              // Update in-memory data with Firestore data
+              aprilPicks = data.april_picks || [];
+              nathanPicks = data.nathan_picks || [];
+              weeklySchedule = data.weekly_schedule || Array(7).fill(null);
+
+              // Update localStorage cache
+              weeklyMealPlans[weekKey] = {
+                aprilPicks: [...aprilPicks],
+                nathanPicks: [...nathanPicks],
+                weeklySchedule: [...weeklySchedule]
+              };
+              localStorage.setItem('weeklyMealPlans', JSON.stringify(weeklyMealPlans));
+
+              // Re-render with Firestore data
+              renderPlanningSlots();
+            } else {
+              console.log('📝 No weekly plan in Firestore for', weekKey);
+            }
+          } catch (error) {
+            console.error('❌ Error loading weekly plan from Firestore:', error);
+          }
         }
       }
 
@@ -4132,20 +4167,20 @@
         document.getElementById('weekDate').textContent = `Week of ${month} ${day}, ${year}`;
       }
 
-      function previousWeek() {
-        saveCurrentWeekPicks();
+      async function previousWeek() {
+        await saveCurrentWeekPicks();
         weekOffset--;
         updateWeekDate();
-        loadWeekPicks();
+        await loadWeekPicks();
         setupWeekPlanListener(); // Set up listener for new week
         renderPlanningSlots();
       }
 
-      function nextWeek() {
-        saveCurrentWeekPicks();
+      async function nextWeek() {
+        await saveCurrentWeekPicks();
         weekOffset++;
         updateWeekDate();
-        loadWeekPicks();
+        await loadWeekPicks();
         setupWeekPlanListener(); // Set up listener for new week
         renderPlanningSlots();
       }
@@ -4575,8 +4610,8 @@
       window.removeFromWeekly = removeFromWeekly;
 
       // Refresh planning data
-      window.refreshPlanningData = function() {
-        loadWeekPicks();
+      window.refreshPlanningData = async function() {
+        await loadWeekPicks();
         setupWeekPlanListener(); // Re-establish listener
         renderPlanningSlots();
         console.log('✅ Planning data refreshed');
