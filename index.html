@@ -700,7 +700,7 @@
 
         @media (min-width: 768px) {
             .selection-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr 1fr 1fr;
             }
         }
 
@@ -1519,7 +1519,7 @@
 
                 <!-- Step 1: Independent Selection -->
                 <div id="selectionStep">
-                    <div class="selection-grid">
+                    <div class="selection-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                         <!-- User's Selection -->
                         <div class="selection-section">
                             <div class="selection-header">
@@ -1537,39 +1537,19 @@
                             </div>
                             <div id="nathanSlots"></div>
                         </div>
+
+                        <!-- Weekly Schedule -->
+                        <div class="selection-section">
+                            <div class="selection-header">
+                                <span class="selection-title">Weekly Schedule</span>
+                                <span class="selection-count" id="weeklyCount">0/7</span>
+                            </div>
+                            <div id="weeklySlots"></div>
+                        </div>
                     </div>
 
-                    <button class="btn-primary" id="checkBalanceBtn" style="display: none;">Check Balance & Continue</button>
-                </div>
-
-                <!-- Step 2: Balance Check & Suggestions -->
-                <div id="balanceStep" style="display: none;">
-                    <div id="balanceWarningsContainer"></div>
-
-                    <div class="final-plan">
-                        <div class="final-plan-title">Combined Plan (6 meals)</div>
-                        <div id="combinedMealsList"></div>
-                    </div>
-
-                    <div style="display: flex; gap: 12px;">
-                        <button class="btn-secondary" id="backToSelectionBtn" style="flex: 1;">Back to Selection</button>
-                        <button class="btn-primary" id="confirmWeekBtn" style="flex: 2;">Confirm Week & Generate Grocery List</button>
-                    </div>
-                </div>
-
-                <!-- Confirmed State -->
-                <div id="confirmedStep" style="display: none;">
-                    <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                        <div style="font-size: 15px; font-weight: 600; color: #15803d; margin-bottom: 4px;">Week Confirmed!</div>
-                        <div style="font-size: 14px; color: #16a34a;">Your grocery list has been generated. Check the Grocery tab.</div>
-                    </div>
-
-                    <div class="final-plan">
-                        <div class="final-plan-title">This Week's Meals</div>
-                        <div id="confirmedMealsList"></div>
-                    </div>
-
-                    <button class="btn-secondary" id="resetWeekBtn" style="width: 100%;">Start New Week</button>
+                    <!-- Generate Grocery List Button -->
+                    <button class="btn-primary" id="generateGroceryBtn" style="width: 100%; margin-top: 8px;">Generate Grocery List</button>
                 </div>
             </div>
         </div>
@@ -3879,9 +3859,13 @@
       // Weekly Planning
       let aprilPicks = [];
       let nathanPicks = [];
+      let weeklySchedule = Array(7).fill(null); // Monday-Sunday
       let currentSelectingUser = null;
       let currentSelectingSlot = null;
       let weeklyMealPlans = {}; // Store meal plans by week key
+      let draggedRecipe = null;
+      let draggedFromUser = null;
+      let draggedFromIndex = null;
 
       function initializeWeeklyPlanning() {
         // Update user names in the planning view
@@ -3928,7 +3912,8 @@
         const weekKey = getWeekKey();
         weeklyMealPlans[weekKey] = {
           aprilPicks: [...aprilPicks],
-          nathanPicks: [...nathanPicks]
+          nathanPicks: [...nathanPicks],
+          weeklySchedule: [...weeklySchedule]
         };
         localStorage.setItem('weeklyMealPlans', JSON.stringify(weeklyMealPlans));
       }
@@ -3943,9 +3928,11 @@
         if (weeklyMealPlans[weekKey]) {
           aprilPicks = [...weeklyMealPlans[weekKey].aprilPicks];
           nathanPicks = [...weeklyMealPlans[weekKey].nathanPicks];
+          weeklySchedule = weeklyMealPlans[weekKey].weeklySchedule ? [...weeklyMealPlans[weekKey].weeklySchedule] : Array(7).fill(null);
         } else {
           aprilPicks = [];
           nathanPicks = [];
+          weeklySchedule = Array(7).fill(null);
         }
       }
 
@@ -3986,9 +3973,11 @@
       function renderPlanningSlots() {
         const aprilContainer = document.getElementById('aprilSlots');
         const nathanContainer = document.getElementById('nathanSlots');
+        const weeklyContainer = document.getElementById('weeklySlots');
 
         aprilContainer.innerHTML = '';
         nathanContainer.innerHTML = '';
+        weeklyContainer.innerHTML = '';
 
         // Create 5 slots for each person
         for (let i = 0; i < 5; i++) {
@@ -3999,6 +3988,13 @@
           // Nathan's slot
           const nathanSlot = createSlot(i, 'nathan', nathanPicks[i]);
           nathanContainer.appendChild(nathanSlot);
+        }
+
+        // Create 7 weekly schedule slots (Monday-Sunday)
+        const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        for (let i = 0; i < 7; i++) {
+          const daySlot = createWeeklySlot(i, dayNames[i], weeklySchedule[i]);
+          weeklyContainer.appendChild(daySlot);
         }
 
         updateCounts();
@@ -4027,6 +4023,8 @@
           slot.style.border = '2px solid #e2e8f0';
           slot.style.background = '#ffffff';
           slot.style.justifyContent = 'space-between';
+          slot.draggable = true;
+          slot.style.cursor = 'grab';
 
           const photoHTML = recipe.photos?.length > 0
             ? `<div style="width: 60px; height: 60px; flex-shrink: 0; margin-right: 12px;">
@@ -4047,6 +4045,19 @@
               </svg>
             </button>
           `;
+
+          // Add drag event listeners
+          slot.addEventListener('dragstart', (e) => {
+            draggedRecipe = recipe;
+            draggedFromUser = user;
+            draggedFromIndex = index;
+            slot.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+          });
+
+          slot.addEventListener('dragend', (e) => {
+            slot.style.opacity = '1';
+          });
         } else {
           slot.innerHTML = `
             <div style="text-align: center; color: #94A3B8;">
@@ -4066,6 +4077,76 @@
         };
 
         return slot;
+      }
+
+      function createWeeklySlot(index, dayName, recipe) {
+        const slot = document.createElement('div');
+        slot.className = 'weekly-slot';
+        slot.style.cssText = 'padding: 12px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; margin-bottom: 10px; min-height: 70px; display: flex; flex-direction: column; transition: all 0.2s;';
+
+        // Make slot a drop target
+        slot.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          slot.style.borderColor = '#BF3143';
+          slot.style.background = '#fef2f2';
+        });
+
+        slot.addEventListener('dragleave', () => {
+          slot.style.borderColor = '#cbd5e1';
+          slot.style.background = '#f8fafc';
+        });
+
+        slot.addEventListener('drop', (e) => {
+          e.preventDefault();
+          slot.style.borderColor = '#cbd5e1';
+          slot.style.background = '#f8fafc';
+
+          if (draggedRecipe) {
+            // Add to weekly schedule
+            weeklySchedule[index] = draggedRecipe;
+            saveCurrentWeekPicks();
+            renderPlanningSlots();
+          }
+        });
+
+        if (recipe) {
+          slot.style.border = '2px solid #e2e8f0';
+          slot.style.background = '#ffffff';
+
+          slot.innerHTML = `
+            <div style="font-size: 11px; font-weight: 600; color: #64748B; margin-bottom: 6px;">${dayName}</div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${recipe.photos?.length > 0 ? `<img src="${recipe.photos[0]}" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">` : ''}
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; color: #333; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${recipe.name}</div>
+              </div>
+              <button onclick="event.stopPropagation(); removeFromWeekly(${index})" style="padding: 6px; background: transparent; border: none; cursor: pointer; color: #94A3B8; transition: color 0.2s; flex-shrink: 0;" onmouseover="this.style.color='#BF3143'" onmouseout="this.style.color='#94A3B8'">
+                <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;">
+                  <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
+                  <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          `;
+        } else {
+          slot.innerHTML = `
+            <div style="font-size: 11px; font-weight: 600; color: #64748B; margin-bottom: 4px;">${dayName}</div>
+            <div style="text-align: center; color: #cbd5e1; padding: 8px 0;">
+              <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2;">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </div>
+          `;
+        }
+
+        return slot;
+      }
+
+      function removeFromWeekly(index) {
+        weeklySchedule[index] = null;
+        saveCurrentWeekPicks();
+        renderPlanningSlots();
       }
 
       function openRecipePicker(user, slotIndex) {
@@ -4207,16 +4288,18 @@
       function updateCounts() {
         const aprilCount = aprilPicks.filter(r => r).length;
         const nathanCount = nathanPicks.filter(r => r).length;
+        const weeklyCount = weeklySchedule.filter(r => r).length;
 
         document.getElementById('aprilCount').textContent = `${aprilCount}/5`;
         document.getElementById('nathanCount').textContent = `${nathanCount}/5`;
+        document.getElementById('weeklyCount').textContent = `${weeklyCount}/7`;
 
-        // Show continue button if both have at least 1 selection
-        const continueBtn = document.getElementById('checkBalanceBtn');
-        if (aprilCount > 0 && nathanCount > 0) {
-          continueBtn.style.display = 'block';
+        // Show generate button if there's at least one meal in the weekly schedule
+        const generateBtn = document.getElementById('generateGroceryBtn');
+        if (weeklyCount > 0) {
+          generateBtn.style.display = 'block';
         } else {
-          continueBtn.style.display = 'none';
+          generateBtn.style.display = 'none';
         }
       }
 
@@ -4224,6 +4307,54 @@
       document.getElementById('closeSelectModal').addEventListener('click', () => {
         document.getElementById('selectRecipeModal').classList.remove('active');
       });
+
+      // Make planning functions global
+      window.previousWeek = previousWeek;
+      window.nextWeek = nextWeek;
+      window.removeRecipeFromSlot = removeRecipeFromSlot;
+      window.removeFromWeekly = removeFromWeekly;
+
+      // Generate Grocery List button
+      document.getElementById('generateGroceryBtn').addEventListener('click', () => {
+        // Get all recipes from weekly schedule
+        const weeklyRecipes = weeklySchedule.filter(r => r);
+
+        if (weeklyRecipes.length === 0) {
+          showAlert('Please add recipes to your weekly schedule first.');
+          return;
+        }
+
+        // Generate grocery list from weekly schedule
+        generateGroceryListFromRecipes(weeklyRecipes);
+
+        // Switch to grocery tab
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('[data-view="groceryView"]').classList.add('active');
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('groceryView').classList.add('active');
+
+        loadGroceryList();
+      });
+
+      function generateGroceryListFromRecipes(recipes) {
+        // Combine all ingredients from all recipes
+        const allIngredients = [];
+        recipes.forEach(recipe => {
+          if (recipe.ingredients && Array.isArray(recipe.ingredients)) {
+            recipe.ingredients.forEach(ing => {
+              allIngredients.push(ing.name);
+            });
+          }
+        });
+
+        // Save to localStorage for grocery list
+        const groceryData = {
+          ingredients: allIngredients,
+          recipes: recipes.map(r => ({ name: r.name, id: r.id })),
+          generatedAt: Date.now()
+        };
+        localStorage.setItem('currentGroceryList', JSON.stringify(groceryData));
+      }
 
       // Auth state observer
       // Auto sign-in anonymously (like Tiny Nudge)
