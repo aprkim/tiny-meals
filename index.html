@@ -694,21 +694,34 @@
         .selection-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 12px;
             margin-bottom: 24px;
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 640px) {
+            .selection-grid {
+                gap: 16px;
+            }
+        }
+
+        @media (min-width: 1024px) {
             .selection-grid {
                 grid-template-columns: 1fr 1fr 1fr;
+                gap: 20px;
             }
         }
 
         .selection-section {
             background: white;
             border-radius: 12px;
-            padding: 16px;
+            padding: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        @media (min-width: 640px) {
+            .selection-section {
+                padding: 16px;
+            }
         }
 
         .selection-header {
@@ -728,6 +741,48 @@
             font-size: 13px;
             font-weight: 600;
             color: #BF3143;
+        }
+
+        .selection-slot {
+            padding: 12px;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        @media (min-width: 640px) {
+            .selection-slot {
+                padding: 16px;
+                margin-bottom: 12px;
+                min-height: 80px;
+            }
+        }
+
+        .weekly-slot {
+            padding: 10px;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.2s;
+        }
+
+        @media (min-width: 640px) {
+            .weekly-slot {
+                padding: 12px;
+                margin-bottom: 10px;
+                min-height: 70px;
+            }
         }
 
         .meal-slot {
@@ -1519,7 +1574,7 @@
 
                 <!-- Step 1: Independent Selection -->
                 <div id="selectionStep">
-                    <div class="selection-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                    <div class="selection-grid">
                         <!-- User's Selection -->
                         <div class="selection-section">
                             <div class="selection-header">
@@ -4003,7 +4058,6 @@
       function createSlot(index, user, recipe) {
         const slot = document.createElement('div');
         slot.className = 'selection-slot';
-        slot.style.cssText = 'padding: 16px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; margin-bottom: 12px; cursor: pointer; min-height: 80px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;';
 
         slot.onmouseover = () => {
           if (!recipe) {
@@ -4082,7 +4136,6 @@
       function createWeeklySlot(index, dayName, recipe) {
         const slot = document.createElement('div');
         slot.className = 'weekly-slot';
-        slot.style.cssText = 'padding: 12px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; margin-bottom: 10px; min-height: 70px; display: flex; flex-direction: column; transition: all 0.2s;';
 
         // Make slot a drop target
         slot.addEventListener('dragover', (e) => {
