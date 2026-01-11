@@ -667,6 +667,13 @@
             justify-content: center;
             transition: all 0.2s;
             z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .view.active .floating-add-btn {
+            opacity: 1;
+            visibility: visible;
         }
 
         .floating-add-btn:hover {
