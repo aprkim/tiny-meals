@@ -333,6 +333,11 @@
             fill: none;
         }
 
+        .nav-tab[data-view="ideasView"] svg {
+            width: 28.6px;
+            height: 28.6px;
+        }
+
         .nav-tab span {
             font-size: 11px;
             font-weight: 600;
@@ -2286,6 +2291,19 @@
           loadRecipes();
           loadHistory();
         }
+
+        // Initialize user names in settings
+        const savedSpace = localStorage.getItem(STORAGE_KEYS.SPACE);
+        if (savedSpace) {
+          const space = JSON.parse(savedSpace);
+          document.getElementById('userNameDisplay').textContent = space.userName || 'User';
+          document.getElementById('partnerNameDisplay').textContent = space.partnerName || 'Partner';
+          document.getElementById('spaceNameDisplay').textContent = space.name || 'My Space';
+
+          // Update meal planning titles
+          document.getElementById('userPicksTitle').textContent = `${space.userName || 'User'}'s Picks`;
+          document.getElementById('partnerPicksTitle').textContent = `${space.partnerName || 'Partner'}'s Picks`;
+        }
       }
 
       async function checkOnboardingState() {
@@ -3806,15 +3824,18 @@
           });
 
         // Load all recipes for planning
-        db.collection('recipes')
-            .where('user_id', '==', currentUser.uid)
-            .onSnapshot((snapshot) => {
-              allRecipes = [];
-              snapshot.forEach((doc) => {
-                allRecipes.push({ id: doc.id, ...doc.data() });
+        const planningUserId = getEffectiveUserId();
+        if (planningUserId) {
+          db.collection('recipes')
+              .where('user_id', '==', planningUserId)
+              .onSnapshot((snapshot) => {
+                allRecipes = [];
+                snapshot.forEach((doc) => {
+                  allRecipes.push({ id: doc.id, ...doc.data() });
+                });
+                initializeWeeklyPlanning();
               });
-              initializeWeeklyPlanning();
-            });
+        }
       }
 
       function filterRecipes(filters) {
