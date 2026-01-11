@@ -3704,10 +3704,30 @@
             // Re-attach click handlers for filters
             filterBar.querySelectorAll('.tag.clickable').forEach(tag => {
                 tag.addEventListener('click', () => {
-                    filterBar.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
-                    tag.classList.add('active');
                     const filter = tag.getAttribute('data-filter');
-                    filterRecipes(filter);
+
+                    if (filter === 'all') {
+                        // Clicking "All" deselects everything
+                        filterBar.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+                        tag.classList.add('active');
+                        filterRecipes([]);
+                    } else {
+                        // Remove "All" when selecting specific tags
+                        filterBar.querySelector('[data-filter="all"]').classList.remove('active');
+
+                        // Toggle this tag
+                        tag.classList.toggle('active');
+
+                        // If no tags selected, show all
+                        const activeTags = Array.from(filterBar.querySelectorAll('.tag.active:not([data-filter="all"])'));
+                        if (activeTags.length === 0) {
+                            filterBar.querySelector('[data-filter="all"]').classList.add('active');
+                            filterRecipes([]);
+                        } else {
+                            const activeFilters = activeTags.map(t => t.getAttribute('data-filter'));
+                            filterRecipes(activeFilters);
+                        }
+                    }
                 });
             });
 
@@ -3765,14 +3785,17 @@
             });
       }
 
-      function filterRecipes(filter) {
+      function filterRecipes(filters) {
         const cards = document.querySelectorAll('#recipesList .card');
         cards.forEach(card => {
-          if (filter === 'all') {
+          if (!filters || filters.length === 0) {
+            // Show all when no filters or "All" is selected
             card.style.display = '';
           } else {
-            const tags = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent);
-            card.style.display = tags.includes(filter) ? '' : 'none';
+            // Show only if recipe has ALL selected tags (AND logic)
+            const recipeTags = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent);
+            const hasAllTags = filters.every(filter => recipeTags.includes(filter));
+            card.style.display = hasAllTags ? '' : 'none';
           }
         });
       }
@@ -4005,6 +4028,36 @@
             filtersContainer.appendChild(tagSpan);
           });
 
+          // Attach click handlers for multi-select filtering
+          filtersContainer.querySelectorAll('.tag.clickable').forEach(tag => {
+            tag.addEventListener('click', () => {
+              const filter = tag.getAttribute('data-filter');
+
+              if (filter === 'all') {
+                // Clicking "All" deselects everything
+                filtersContainer.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+                tag.classList.add('active');
+                filterSelectRecipes([]);
+              } else {
+                // Remove "All" when selecting specific tags
+                filtersContainer.querySelector('[data-filter="all"]').classList.remove('active');
+
+                // Toggle this tag
+                tag.classList.toggle('active');
+
+                // If no tags selected, show all
+                const activeTags = Array.from(filtersContainer.querySelectorAll('.tag.active:not([data-filter="all"])'));
+                if (activeTags.length === 0) {
+                  filtersContainer.querySelector('[data-filter="all"]').classList.add('active');
+                  filterSelectRecipes([]);
+                } else {
+                  const activeFilters = activeTags.map(t => t.getAttribute('data-filter'));
+                  filterSelectRecipes(activeFilters);
+                }
+              }
+            });
+          });
+
           allRecipes.forEach(recipe => {
             const card = document.createElement('div');
             card.className = 'card';
@@ -4037,6 +4090,21 @@
         }
 
         modal.classList.add('active');
+      }
+
+      function filterSelectRecipes(filters) {
+        const cards = document.querySelectorAll('#selectRecipesList .card');
+        cards.forEach(card => {
+          if (!filters || filters.length === 0) {
+            // Show all when no filters or "All" is selected
+            card.style.display = '';
+          } else {
+            // Show only if recipe has ALL selected tags (AND logic)
+            const recipeTags = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent);
+            const hasAllTags = filters.every(filter => recipeTags.includes(filter));
+            card.style.display = hasAllTags ? '' : 'none';
+          }
+        });
       }
 
       function selectRecipeForSlot(recipe) {
