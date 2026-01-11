@@ -403,7 +403,7 @@
         }
 
         .modal-close {
-            position: absolute;
+            position: fixed;
             top: 14px;
             right: 14px;
             background: rgba(255, 255, 255, 0.9);
@@ -419,6 +419,7 @@
             border-radius: 6px;
             transition: all 0.2s;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 10001;
         }
 
         .modal-close:hover {
@@ -3977,6 +3978,8 @@
       let draggedFromUser = null;
       let draggedFromIndex = null;
 
+      let weekPlanListener = null; // Store listener to unsubscribe when week changes
+
       function initializeWeeklyPlanning() {
         // Update user names in the planning view
         const savedSpace = localStorage.getItem(STORAGE_KEYS.SPACE);
@@ -3991,6 +3994,9 @@
         // Load saved meal plans from localStorage
         loadWeekPicks();
 
+        // Set up real-time sync for current week
+        setupWeekPlanListener();
+
         // Update week date to show upcoming Sunday
         updateWeekDate();
 
@@ -4000,6 +4006,49 @@
           return;
         }
         renderPlanningSlots();
+      }
+
+      function setupWeekPlanListener() {
+        const userId = getEffectiveUserId();
+        const weekKey = getWeekKey();
+
+        if (!userId) return;
+
+        // Unsubscribe from previous listener if exists
+        if (weekPlanListener) {
+          weekPlanListener();
+          weekPlanListener = null;
+        }
+
+        // Set up real-time listener for current week's plan
+        weekPlanListener = db.collection('weekly_plans')
+          .doc(`${userId}_${weekKey}`)
+          .onSnapshot((doc) => {
+            if (doc.exists) {
+              const data = doc.data();
+              console.log('🔍 Received weekly plan update from Firestore:', weekKey);
+
+              // Update in-memory data
+              aprilPicks = data.april_picks || [];
+              nathanPicks = data.nathan_picks || [];
+              weeklySchedule = data.weekly_schedule || Array(7).fill(null);
+
+              // Update localStorage cache
+              weeklyMealPlans[weekKey] = {
+                aprilPicks: [...aprilPicks],
+                nathanPicks: [...nathanPicks],
+                weeklySchedule: [...weeklySchedule]
+              };
+              localStorage.setItem('weeklyMealPlans', JSON.stringify(weeklyMealPlans));
+
+              // Re-render the UI
+              renderPlanningSlots();
+            } else {
+              console.log('📝 No weekly plan found in Firestore for', weekKey);
+            }
+          }, (error) => {
+            console.error('❌ Error listening to weekly plan:', error);
+          });
       }
 
       let weekOffset = 0; // Track how many weeks forward or back from current week
@@ -4018,14 +4067,33 @@
         return `${year}-${month}-${day}`;
       }
 
-      function saveCurrentWeekPicks() {
+      async function saveCurrentWeekPicks() {
         const weekKey = getWeekKey();
-        weeklyMealPlans[weekKey] = {
+        const planData = {
           aprilPicks: [...aprilPicks],
           nathanPicks: [...nathanPicks],
           weeklySchedule: [...weeklySchedule]
         };
+        weeklyMealPlans[weekKey] = planData;
         localStorage.setItem('weeklyMealPlans', JSON.stringify(weeklyMealPlans));
+
+        // Also save to Firestore for cross-device sync
+        const userId = getEffectiveUserId();
+        if (userId) {
+          try {
+            await db.collection('weekly_plans').doc(`${userId}_${weekKey}`).set({
+              user_id: userId,
+              week_key: weekKey,
+              april_picks: planData.aprilPicks,
+              nathan_picks: planData.nathanPicks,
+              weekly_schedule: planData.weeklySchedule,
+              updated_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log('✅ Saved weekly plan to Firestore:', weekKey);
+          } catch (error) {
+            console.error('❌ Error saving weekly plan to Firestore:', error);
+          }
+        }
       }
 
       function loadWeekPicks() {
@@ -4069,6 +4137,7 @@
         weekOffset--;
         updateWeekDate();
         loadWeekPicks();
+        setupWeekPlanListener(); // Set up listener for new week
         renderPlanningSlots();
       }
 
@@ -4077,6 +4146,7 @@
         weekOffset++;
         updateWeekDate();
         loadWeekPicks();
+        setupWeekPlanListener(); // Set up listener for new week
         renderPlanningSlots();
       }
 
@@ -4507,6 +4577,7 @@
       // Refresh planning data
       window.refreshPlanningData = function() {
         loadWeekPicks();
+        setupWeekPlanListener(); // Re-establish listener
         renderPlanningSlots();
         console.log('✅ Planning data refreshed');
       };
