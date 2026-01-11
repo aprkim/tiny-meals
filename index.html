@@ -2140,6 +2140,18 @@
         </div>
     </div>
 
+    <!-- ==================== SELECT FROM PICKS MODAL ==================== -->
+    <div class="modal-overlay" id="selectFromPicksModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Select Recipe for <span id="dayNameTitle"></span></h2>
+                <button class="modal-close" id="closePicksModal">&times;</button>
+            </div>
+
+            <div id="picksRecipesList" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -4191,9 +4203,66 @@
               </svg>
             </div>
           `;
+
+          // Add click handler for mobile to select from picks
+          slot.onclick = () => {
+            openPicksSelector(index, dayName);
+          };
         }
 
         return slot;
+      }
+
+      function openPicksSelector(dayIndex, dayName) {
+        // Get all recipes from both users' picks
+        const allPicks = [...aprilPicks, ...nathanPicks].filter(r => r);
+
+        if (allPicks.length === 0) {
+          showAlert('Please add some recipes to your picks first.');
+          return;
+        }
+
+        const modal = document.getElementById('selectFromPicksModal');
+        const list = document.getElementById('picksRecipesList');
+        const dayTitle = document.getElementById('dayNameTitle');
+
+        dayTitle.textContent = dayName;
+        list.innerHTML = '';
+
+        allPicks.forEach(recipe => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.cssText = 'cursor: pointer; margin-bottom: 12px; transition: all 0.2s;';
+          card.onmouseover = () => card.style.borderColor = '#BF3143';
+          card.onmouseout = () => card.style.borderColor = '#E5E7EB';
+
+          const photoHTML = recipe.photos?.length > 0
+            ? `<div style="width: 60px; height: 60px; flex-shrink: 0; margin-right: 12px;">
+                 <img src="${recipe.photos[0]}" style="width: 100%; height: 100%; border-radius: 8px; object-fit: cover;">
+               </div>`
+            : '';
+
+          card.innerHTML = `
+            <div style="display: flex; align-items: center;">
+              ${photoHTML}
+              <div style="flex: 1;">
+                <div style="font-weight: 600; margin-bottom: 4px;">${recipe.name}</div>
+                <div style="font-size: 13px; color: #64748B;">${recipe.ingredients?.length || 0} ingredients</div>
+              </div>
+            </div>
+          `;
+
+          card.onclick = () => {
+            weeklySchedule[dayIndex] = recipe;
+            saveCurrentWeekPicks();
+            renderPlanningSlots();
+            modal.classList.remove('active');
+          };
+
+          list.appendChild(card);
+        });
+
+        modal.classList.add('active');
       }
 
       function removeFromWeekly(index) {
@@ -4359,6 +4428,11 @@
       // Close select recipe modal
       document.getElementById('closeSelectModal').addEventListener('click', () => {
         document.getElementById('selectRecipeModal').classList.remove('active');
+      });
+
+      // Close picks selector modal
+      document.getElementById('closePicksModal').addEventListener('click', () => {
+        document.getElementById('selectFromPicksModal').classList.remove('active');
       });
 
       // Make planning functions global
