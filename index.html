@@ -2241,8 +2241,11 @@
 
           const syncData = doc.data();
           const linkedUserId = syncData.user_id;
+          const userName = syncData.user_name || 'User';
+          const partnerName = syncData.partner_name || 'Partner';
 
           console.log('🔍 Found linked user ID:', linkedUserId);
+          console.log('🔍 Found user names:', userName, partnerName);
 
           // Save sync code and linked user ID
           appState.syncCode = code;
@@ -2251,18 +2254,18 @@
 
           console.log('✅ Sync code linked successfully');
 
-          // Create a default space if one doesn't exist
+          // Create a space with the names from the sync code
           const savedSpace = localStorage.getItem(STORAGE_KEYS.SPACE);
           if (!savedSpace) {
-            const defaultSpace = {
+            const syncedSpace = {
               id: 'space_' + Date.now(),
               name: 'Synced Space',
-              userName: 'User',
-              partnerName: 'Partner',
+              userName: userName,
+              partnerName: partnerName,
               created_at: Date.now()
             };
-            localStorage.setItem(STORAGE_KEYS.SPACE, JSON.stringify(defaultSpace));
-            console.log('✅ Created default space');
+            localStorage.setItem(STORAGE_KEYS.SPACE, JSON.stringify(syncedSpace));
+            console.log('✅ Created space with synced names:', userName, partnerName);
           }
 
           showApp();
@@ -3042,13 +3045,25 @@
 
             if (!doc.exists) {
               console.log('🔍 Saving sync code to Firebase...');
+              const space = JSON.parse(localStorage.getItem(STORAGE_KEYS.SPACE) || '{}');
               await db.collection('sync_codes').doc(code).set({
                 user_id: user.uid,
+                user_name: space.userName || 'User',
+                partner_name: space.partnerName || 'Partner',
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
               });
               console.log('✅ Sync code saved to Firebase:', code);
             } else {
               console.log('✅ Sync code already exists in Firebase:', code);
+              // Update names if space exists and doc exists
+              const space = JSON.parse(localStorage.getItem(STORAGE_KEYS.SPACE) || '{}');
+              if (space.userName && space.partnerName) {
+                await db.collection('sync_codes').doc(code).update({
+                  user_name: space.userName,
+                  partner_name: space.partnerName
+                });
+                console.log('✅ Updated names in sync code');
+              }
             }
           } catch (error) {
             console.error('❌ Error saving sync code:', error);
@@ -3141,8 +3156,11 @@
 
           const syncData = doc.data();
           const linkedUserId = syncData.user_id;
+          const userName = syncData.user_name || 'User';
+          const partnerName = syncData.partner_name || 'Partner';
 
           console.log('🔍 Linked user ID from sync code:', linkedUserId);
+          console.log('🔍 Found user names:', userName, partnerName);
 
           // Store the sync code and linked user ID
           localStorage.setItem('tinyMeals_syncCode', code);
@@ -3150,18 +3168,25 @@
 
           console.log('✅ Saved to localStorage - syncCode:', code, 'linkedUserId:', linkedUserId);
 
-          // Create a default space if one doesn't exist
+          // Update space with the names from sync code
           const savedSpace = localStorage.getItem(STORAGE_KEYS.SPACE);
           if (!savedSpace) {
-            const defaultSpace = {
+            const syncedSpace = {
               id: 'space_' + Date.now(),
               name: 'Synced Space',
-              userName: 'User',
-              partnerName: 'Partner',
+              userName: userName,
+              partnerName: partnerName,
               created_at: Date.now()
             };
-            localStorage.setItem(STORAGE_KEYS.SPACE, JSON.stringify(defaultSpace));
-            console.log('✅ Created default space');
+            localStorage.setItem(STORAGE_KEYS.SPACE, JSON.stringify(syncedSpace));
+            console.log('✅ Created space with synced names:', userName, partnerName);
+          } else {
+            // Update existing space with synced names
+            const space = JSON.parse(savedSpace);
+            space.userName = userName;
+            space.partnerName = partnerName;
+            localStorage.setItem(STORAGE_KEYS.SPACE, JSON.stringify(space));
+            console.log('✅ Updated space with synced names:', userName, partnerName);
           }
 
           console.log('✅ Linked to user:', linkedUserId);
