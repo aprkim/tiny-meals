@@ -406,9 +406,9 @@
             position: absolute;
             top: 14px;
             right: 14px;
-            background: none;
+            background: rgba(255, 255, 255, 0.9);
             border: none;
-            color: #94A3B8;
+            color: #64748B;
             font-size: 24px;
             cursor: pointer;
             width: 32px;
@@ -418,11 +418,13 @@
             justify-content: center;
             border-radius: 6px;
             transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .modal-close:hover {
-            background: #F1F5F9;
-            color: #64748B;
+            background: rgba(255, 255, 255, 1);
+            color: #475569;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
         }
 
         /* ==================== COMMON COMPONENTS ==================== */
@@ -2244,17 +2246,17 @@
         const partnerName = document.getElementById('partnerName').value.trim();
 
         if (!spaceName) {
-          alert('Please enter a name for your space');
+          showAlert('Please enter a name for your space');
           return;
         }
 
         if (!userName) {
-          alert('Please enter your name');
+          showAlert('Please enter your name');
           return;
         }
 
         if (!partnerName) {
-          alert('Please enter your partner\'s name');
+          showAlert('Please enter your partner\'s name');
           return;
         }
 
@@ -2287,7 +2289,7 @@
         const code = input.value.trim().toLowerCase();
 
         if (!code) {
-          alert('Please enter a sync code');
+          showAlert('Please enter a sync code');
           return;
         }
 
@@ -2345,7 +2347,7 @@
           showApp();
         } catch (error) {
           console.error('❌ Error looking up sync code:', error);
-          alert('Failed to link sync code. Please try again.');
+          showAlert('Failed to link sync code. Please try again.');
         }
       };
 
@@ -2549,7 +2551,7 @@
         const link = document.getElementById('ideaLinkInput').value.trim();
 
         if (!note && !link && !currentIdeaPhoto) {
-          alert('Please add a note, link, or photo');
+          showAlert('Please add a note, link, or photo');
           return;
         }
 
@@ -2581,7 +2583,7 @@
           currentIdeaPhoto = null;
         } catch (error) {
           console.error('Error saving idea:', error);
-          alert('Error saving idea: ' + error.message);
+          showAlert('Error saving idea: ' + error.message);
         }
       });
 
@@ -2783,7 +2785,7 @@
           .filter(t => t);
 
         if (!note && !link && !currentEditIdeaPhoto && !currentEditIdeaPhotoUrl) {
-          alert('Please add a note, link, or photo');
+          showAlert('Please add a note, link, or photo');
           return;
         }
 
@@ -2940,7 +2942,7 @@
       async function findImageOnline() {
         const recipeName = document.getElementById('editRecipeName').value.trim();
         if (!recipeName) {
-          alert('Please enter a recipe name first');
+          showAlert('Please enter a recipe name first');
           return;
         }
 
@@ -2959,7 +2961,7 @@
           preview.style.display = 'block';
           document.getElementById('editRecipePhotoButtonText').textContent = 'Change Photo';
         } else {
-          alert('Could not find an image online. Please try uploading your own.');
+          showAlert('Could not find an image online. Please try uploading your own.');
         }
       }
 
@@ -2992,7 +2994,7 @@
           .filter(t => t);
 
         if (!name) {
-          alert('Please enter a recipe name');
+          showAlert('Please enter a recipe name');
           return;
         }
 
@@ -3768,7 +3770,7 @@
         }
 
         if (!name) {
-          alert('Please enter a recipe name');
+          showAlert('Please enter a recipe name');
           return;
         }
 
@@ -3797,7 +3799,7 @@
           currentRecipePhoto = null;
         } catch (error) {
           console.error('Error adding recipe:', error);
-          alert('Error adding recipe: ' + error.message);
+          showAlert('Error adding recipe: ' + error.message);
         }
       });
 
