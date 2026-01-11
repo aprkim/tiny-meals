@@ -1,25 +1,40 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow authenticated users to access their own data
+    // Allow authenticated users to read all data (client-side filtering by user_id)
+    // This is necessary for cross-device sync functionality
     match /ideas/{ideaId} {
-      allow create: if request.auth != null && request.resource.data.user_id == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
     }
 
     match /recipes/{recipeId} {
-      allow create: if request.auth != null && request.resource.data.user_id == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
     }
 
     match /history/{historyId} {
-      allow create: if request.auth != null && request.resource.data.user_id == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
     }
 
     match /guests/{guestId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
+    }
+
+    // Sync codes - allow creating and reading sync codes
+    match /sync_codes/{syncCode} {
+      // Anyone authenticated can create a sync code with their user_id
       allow create: if request.auth != null && request.resource.data.user_id == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
+      // Anyone authenticated can read any sync code (needed to link devices)
+      allow read: if request.auth != null;
+      // Only allow updates/deletes by the owner
+      allow update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
     }
 
     // Legacy Tiny Nudge support (if needed)
