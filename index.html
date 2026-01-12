@@ -403,7 +403,7 @@
         }
 
         .modal-close {
-            position: fixed;
+            position: absolute;
             top: 14px;
             right: 14px;
             background: rgba(255, 255, 255, 0.9);
@@ -419,7 +419,7 @@
             border-radius: 6px;
             transition: all 0.2s;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            z-index: 10001;
+            z-index: 10;
         }
 
         .modal-close:hover {
@@ -2004,16 +2004,16 @@
 
     <!-- ==================== RECIPE DETAIL MODAL ==================== -->
     <div id="recipeDetailModal" class="modal-overlay" onclick="if(event.target === this) closeRecipeDetail()">
-        <button class="modal-close" onclick="closeRecipeDetail()">&times;</button>
         <div class="modal" style="max-width: 600px;">
+            <button class="modal-close" onclick="closeRecipeDetail()">&times;</button>
             <div id="recipeDetailContent"></div>
         </div>
     </div>
 
     <!-- ==================== EDIT RECIPE MODAL ==================== -->
     <div id="editRecipeModal" class="modal-overlay" onclick="if(event.target === this) closeEditRecipe()">
-        <button class="modal-close" onclick="closeEditRecipe()">&times;</button>
         <div class="modal" style="max-width: 600px;">
+            <button class="modal-close" onclick="closeEditRecipe()">&times;</button>
             <h2 class="modal-title" style="margin-bottom: 20px;">Edit Recipe</h2>
             <input type="hidden" id="editRecipeId">
 
@@ -2085,8 +2085,8 @@
 
     <!-- ==================== EDIT IDEA MODAL ==================== -->
     <div id="editIdeaModal" class="modal-overlay" onclick="if(event.target === this) closeEditIdea()">
-        <button class="modal-close" onclick="closeEditIdea()">&times;</button>
         <div class="modal" style="max-width: 600px;">
+            <button class="modal-close" onclick="closeEditIdea()">&times;</button>
             <h2 class="modal-title" style="margin-bottom: 20px;">Edit Idea</h2>
             <input type="hidden" id="editIdeaId">
 
