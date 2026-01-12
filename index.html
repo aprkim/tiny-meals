@@ -404,9 +404,9 @@
 
         .modal-close {
             position: sticky;
-            top: 14px;
+            top: 0;
             left: calc(100% - 46px);
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.5); /* 50% transparent */
             border: none;
             color: #64748B;
             font-size: 24px;
@@ -416,8 +416,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
-            transition: all 0.2s;
+            border-radius: 50%; /* fully round */
+            transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             z-index: 10;
             float: right;
