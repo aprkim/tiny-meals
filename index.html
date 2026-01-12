@@ -2364,6 +2364,57 @@
         }
       };
 
+      // Migrate existing localStorage weekly plans to Firestore
+      async function migrateWeeklyPlansToFirestore() {
+        const userId = getEffectiveUserId();
+        if (!userId) return;
+
+        const savedPlans = localStorage.getItem('weeklyMealPlans');
+        if (!savedPlans) {
+          console.log('📝 No weekly plans to migrate');
+          return;
+        }
+
+        try {
+          const plans = JSON.parse(savedPlans);
+          const weekKeys = Object.keys(plans);
+
+          if (weekKeys.length === 0) {
+            console.log('📝 No weekly plans to migrate');
+            return;
+          }
+
+          console.log('🔄 Migrating', weekKeys.length, 'weekly plans to Firestore...');
+
+          for (const weekKey of weekKeys) {
+            const planData = plans[weekKey];
+            const docId = `${userId}_${weekKey}`;
+
+            // Check if already exists in Firestore
+            const existingDoc = await db.collection('weekly_plans').doc(docId).get();
+
+            if (!existingDoc.exists) {
+              // Only migrate if doesn't exist
+              await db.collection('weekly_plans').doc(docId).set({
+                user_id: userId,
+                week_key: weekKey,
+                april_picks: planData.aprilPicks || [],
+                nathan_picks: planData.nathanPicks || [],
+                weekly_schedule: planData.weeklySchedule || Array(7).fill(null),
+                updated_at: firebase.firestore.FieldValue.serverTimestamp()
+              });
+              console.log('✅ Migrated plan for week:', weekKey);
+            } else {
+              console.log('⏭️  Plan already exists for week:', weekKey);
+            }
+          }
+
+          console.log('✅ Migration complete!');
+        } catch (error) {
+          console.error('❌ Error migrating weekly plans:', error);
+        }
+      }
+
       function showApp() {
         document.getElementById('onboardingView').style.display = 'none';
         document.getElementById('onboardingSyncInput').style.display = 'none';
@@ -2374,6 +2425,7 @@
           loadIdeas();
           loadRecipes();
           loadHistory();
+          migrateWeeklyPlansToFirestore(); // Migrate any existing Plan data to Firestore
         }
 
         // Initialize user names in settings
