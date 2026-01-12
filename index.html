@@ -403,9 +403,9 @@
         }
 
         .modal-close {
-            position: absolute;
+            position: sticky;
             top: 14px;
-            right: 14px;
+            left: calc(100% - 46px);
             background: rgba(255, 255, 255, 0.9);
             border: none;
             color: #64748B;
@@ -420,6 +420,8 @@
             transition: all 0.2s;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             z-index: 10;
+            float: right;
+            margin-bottom: -32px;
         }
 
         .modal-close:hover {
