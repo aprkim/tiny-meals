@@ -2331,6 +2331,16 @@
           localStorage.setItem(STORAGE_KEYS.SYNC_CODE, code);
           localStorage.setItem('tinyMeals_linkedUserId', linkedUserId);
 
+          // Store user link in Firestore so rules can check access
+          const currentAuthUid = auth.currentUser?.uid || currentUser?.uid;
+          if (currentAuthUid && currentAuthUid !== linkedUserId) {
+            await db.collection('user_links').doc(currentAuthUid).set({
+              linked_to: linkedUserId,
+              created_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log('✅ Stored user link in Firestore:', currentAuthUid, '->', linkedUserId);
+          }
+
           console.log('✅ Sync code linked successfully');
 
           // Create a space with the data from the sync code
@@ -3265,6 +3275,16 @@
           // Store the sync code and linked user ID
           localStorage.setItem('tinyMeals_syncCode', code);
           localStorage.setItem('tinyMeals_linkedUserId', linkedUserId);
+
+          // Store user link in Firestore so rules can check access
+          const currentAuthUid = auth.currentUser?.uid || currentUser?.uid;
+          if (currentAuthUid && currentAuthUid !== linkedUserId) {
+            await db.collection('user_links').doc(currentAuthUid).set({
+              linked_to: linkedUserId,
+              created_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log('✅ Stored user link in Firestore:', currentAuthUid, '->', linkedUserId);
+          }
 
           console.log('✅ Saved to localStorage - syncCode:', code, 'linkedUserId:', linkedUserId);
 
