@@ -1570,8 +1570,8 @@
                         <h1 class="header-title">Weekly Plan</h1>
                         <p class="header-subtitle">Plan your meals together</p>
                     </div>
-                    <button onclick="refreshPlanningData()" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b';" onmouseout="this.style.background='none'; this.style.color='#64748b';" title="Refresh">
-                        <svg viewBox="0 0 24 24" style="width: 24px; height: 24px;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button id="refreshPlanBtn" onclick="refreshPlanningData()" style="background: none; border: none; color: #64748b; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b';" onmouseout="this.style.background='none'; this.style.color='#64748b';" title="Refresh">
+                        <svg id="refreshPlanIcon" viewBox="0 0 24 24" style="width: 24px; height: 24px; transition: transform 0.6s ease;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
                         </svg>
                     </button>
@@ -4696,10 +4696,52 @@
 
       // Refresh planning data
       window.refreshPlanningData = async function() {
-        await loadWeekPicks();
-        setupWeekPlanListener(); // Re-establish listener
-        renderPlanningSlots();
-        console.log('✅ Planning data refreshed');
+        const btn = document.getElementById('refreshPlanBtn');
+        const icon = document.getElementById('refreshPlanIcon');
+
+        // Disable button and start spinning
+        btn.disabled = true;
+        btn.style.cursor = 'not-allowed';
+        btn.style.opacity = '0.6';
+
+        // Add spinning animation
+        let rotation = 0;
+        const spinInterval = setInterval(() => {
+          rotation += 30;
+          icon.style.transform = `rotate(${rotation}deg)`;
+        }, 30);
+
+        try {
+          await loadWeekPicks();
+          setupWeekPlanListener(); // Re-establish listener
+          renderPlanningSlots();
+          console.log('✅ Planning data refreshed');
+
+          // Stop spinning and show success color briefly
+          clearInterval(spinInterval);
+          icon.style.transform = 'rotate(360deg)';
+          btn.style.color = '#10b981'; // Green
+
+          setTimeout(() => {
+            icon.style.transform = 'rotate(0deg)';
+            btn.style.color = '#64748b';
+            btn.disabled = false;
+            btn.style.cursor = 'pointer';
+            btn.style.opacity = '1';
+          }, 600);
+        } catch (error) {
+          console.error('❌ Error refreshing:', error);
+          clearInterval(spinInterval);
+          icon.style.transform = 'rotate(0deg)';
+          btn.style.color = '#ef4444'; // Red
+
+          setTimeout(() => {
+            btn.style.color = '#64748b';
+            btn.disabled = false;
+            btn.style.cursor = 'pointer';
+            btn.style.opacity = '1';
+          }, 1000);
+        }
       };
 
       // Generate Grocery List button
