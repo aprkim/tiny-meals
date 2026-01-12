@@ -8,8 +8,8 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow update, delete: if request.auth != null && (
         resource.data.user_id == request.auth.uid ||
-        exists(/databases/$(database)/documents/user_links/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/user_links/$(request.auth.uid)).data.linked_to == resource.data.user_id
+        (exists(/databases/$(database)/documents/user_links/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/user_links/$(request.auth.uid)).data.linked_to == resource.data.user_id)
       );
     }
 
@@ -18,8 +18,8 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow update, delete: if request.auth != null && (
         resource.data.user_id == request.auth.uid ||
-        exists(/databases/$(database)/documents/user_links/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/user_links/$(request.auth.uid)).data.linked_to == resource.data.user_id
+        (exists(/databases/$(database)/documents/user_links/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/user_links/$(request.auth.uid)).data.linked_to == resource.data.user_id)
       );
     }
 
@@ -47,8 +47,8 @@ service cloud.firestore {
       allow create, read: if request.auth != null;
       allow update, delete: if request.auth != null && (
         resource.data.user_id == request.auth.uid ||
-        exists(/databases/$(database)/documents/user_links/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/user_links/$(request.auth.uid)).data.linked_to == resource.data.user_id
+        (exists(/databases/$(database)/documents/user_links/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/user_links/$(request.auth.uid)).data.linked_to == resource.data.user_id)
       );
     }
 
