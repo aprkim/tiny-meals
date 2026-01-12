@@ -3981,6 +3981,7 @@
       let draggedFromIndex = null;
 
       let weekPlanListener = null; // Store listener to unsubscribe when week changes
+      let isLocalUpdate = false; // Flag to prevent listener from triggering on own changes
 
       async function initializeWeeklyPlanning() {
         // Update user names in the planning view
@@ -4026,6 +4027,12 @@
         weekPlanListener = db.collection('weekly_plans')
           .doc(`${userId}_${weekKey}`)
           .onSnapshot((doc) => {
+            // Skip if this update came from our own save operation
+            if (isLocalUpdate) {
+              console.log('🔍 Skipping local update echo');
+              return;
+            }
+
             if (doc.exists) {
               const data = doc.data();
               console.log('🔍 Received weekly plan update from Firestore:', weekKey);
@@ -4083,6 +4090,7 @@
         const userId = getEffectiveUserId();
         if (userId) {
           try {
+            isLocalUpdate = true; // Mark this as our own update
             await db.collection('weekly_plans').doc(`${userId}_${weekKey}`).set({
               user_id: userId,
               week_key: weekKey,
@@ -4092,8 +4100,11 @@
               updated_at: firebase.firestore.FieldValue.serverTimestamp()
             });
             console.log('✅ Saved weekly plan to Firestore:', weekKey);
+            // Reset flag after a short delay to allow listener to fire
+            setTimeout(() => { isLocalUpdate = false; }, 500);
           } catch (error) {
             console.error('❌ Error saving weekly plan to Firestore:', error);
+            isLocalUpdate = false;
           }
         }
       }
