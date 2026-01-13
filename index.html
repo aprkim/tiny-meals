@@ -2174,20 +2174,6 @@
         </div>
     </div>
 
-    <!-- Move to Weekly Schedule Modal -->
-    <div class="modal-overlay" id="moveToWeeklyModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">Move to Weekly Schedule</h2>
-                <button class="modal-close" id="closeMoveToWeeklyModal">&times;</button>
-            </div>
-
-            <p style="font-size: 14px; color: #64748B; margin-bottom: 16px;">Select a day to add this recipe:</p>
-
-            <div id="weekDaysList" style="display: flex; flex-direction: column; gap: 8px;"></div>
-        </div>
-    </div>
-
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -4359,19 +4345,12 @@
               <div style="font-weight: 600; color: #333; margin-bottom: 4px;">${recipe.name}</div>
               <div style="font-size: 13px; color: #64748B;">${recipe.ingredients?.length || 0} ingredients</div>
             </div>
-            <div style="display: flex; gap: 4px; align-items: center;">
-              <button onclick="event.stopPropagation(); openMoveToWeeklyModal('${user}', ${index})" style="padding: 8px; background: transparent; border: none; cursor: pointer; color: #64748B; transition: color 0.2s;" onmouseover="this.style.color='#BF3143'" onmouseout="this.style.color='#64748B'" title="Move to weekly schedule">
-                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2;">
-                  <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <button onclick="event.stopPropagation(); removeRecipeFromSlot('${user}', ${index})" style="padding: 8px; background: transparent; border: none; cursor: pointer; color: #94A3B8; transition: color 0.2s;" onmouseover="this.style.color='#BF3143'" onmouseout="this.style.color='#94A3B8'" title="Remove recipe">
-                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2;">
-                  <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
-                  <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
-                </svg>
-              </button>
-            </div>
+            <button onclick="event.stopPropagation(); removeRecipeFromSlot('${user}', ${index})" style="padding: 8px; background: transparent; border: none; cursor: pointer; color: #94A3B8; transition: color 0.2s;" onmouseover="this.style.color='#BF3143'" onmouseout="this.style.color='#94A3B8'">
+              <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2;">
+                <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round"/>
+                <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round"/>
+              </svg>
+            </button>
           `;
 
           // Add drag event listeners
@@ -4544,46 +4523,6 @@
           };
 
           list.appendChild(card);
-        });
-
-        modal.classList.add('active');
-      }
-
-      function openMoveToWeeklyModal(user, slotIndex) {
-        const recipe = user === 'april' ? aprilPicks[slotIndex] : nathanPicks[slotIndex];
-
-        if (!recipe) return;
-
-        const modal = document.getElementById('moveToWeeklyModal');
-        const list = document.getElementById('weekDaysList');
-
-        list.innerHTML = '';
-
-        const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-        dayNames.forEach((dayName, dayIndex) => {
-          const dayButton = document.createElement('button');
-          dayButton.className = 'btn-secondary';
-          dayButton.style.cssText = 'width: 100%; padding: 16px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;';
-
-          const existingRecipe = weeklySchedule[dayIndex];
-          const statusText = existingRecipe
-            ? `<span style="font-size: 12px; color: #64748B;">${existingRecipe.name}</span>`
-            : `<span style="font-size: 12px; color: #94A3B8;">Empty</span>`;
-
-          dayButton.innerHTML = `
-            <span style="font-weight: 600;">${dayName}</span>
-            ${statusText}
-          `;
-
-          dayButton.onclick = () => {
-            weeklySchedule[dayIndex] = recipe;
-            saveCurrentWeekPicks();
-            renderPlanningSlots();
-            modal.classList.remove('active');
-          };
-
-          list.appendChild(dayButton);
         });
 
         modal.classList.add('active');
@@ -4771,17 +4710,11 @@
         document.getElementById('selectFromPicksModal').classList.remove('active');
       });
 
-      // Close move to weekly modal
-      document.getElementById('closeMoveToWeeklyModal').addEventListener('click', () => {
-        document.getElementById('moveToWeeklyModal').classList.remove('active');
-      });
-
       // Make planning functions global
       window.previousWeek = previousWeek;
       window.nextWeek = nextWeek;
       window.removeRecipeFromSlot = removeRecipeFromSlot;
       window.removeFromWeekly = removeFromWeekly;
-      window.openMoveToWeeklyModal = openMoveToWeeklyModal;
 
       // Refresh planning data
       window.refreshPlanningData = async function() {
