@@ -1622,8 +1622,11 @@
                         </div>
                     </div>
 
-                    <!-- Generate Grocery List Button -->
-                    <button class="btn-primary" id="generateGroceryBtn" style="width: 100%; margin-top: 8px;">Generate Grocery List</button>
+                    <!-- Confirm and Generate Buttons -->
+                    <div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;">
+                        <button class="btn-secondary" id="confirmPlanBtn" style="flex: 1;">Confirm Plan</button>
+                        <button class="btn-primary" id="generateGroceryBtn" style="flex: 1;">Generate Grocery List</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -4133,6 +4136,7 @@
       }
 
       let weekOffset = 0; // Track how many weeks forward or back from current week
+      let isPlanConfirmed = false; // Track if weekly plan is confirmed
 
       function getWeekKey() {
         const today = new Date();
@@ -4438,9 +4442,15 @@
             </div>
           `;
 
-          // Add click handler to change recipe
+          // Add click handler - either to change recipe or view it
           slot.onclick = () => {
-            openPicksSelector(index, dayName);
+            if (isPlanConfirmed) {
+              // If confirmed, open recipe detail
+              openRecipeDetail(recipe.id);
+            } else {
+              // If not confirmed, allow changing
+              openPicksSelector(index, dayName);
+            }
           };
         } else {
           slot.innerHTML = `
@@ -4743,6 +4753,26 @@
           }, 1000);
         }
       };
+
+      // Confirm Plan button
+      document.getElementById('confirmPlanBtn').addEventListener('click', () => {
+        const weeklyRecipes = weeklySchedule.filter(r => r);
+
+        if (weeklyRecipes.length === 0) {
+          showAlert('Please add recipes to your weekly schedule first.');
+          return;
+        }
+
+        isPlanConfirmed = true;
+        const btn = document.getElementById('confirmPlanBtn');
+        btn.textContent = '✓ Confirmed';
+        btn.style.background = '#10b981';
+        btn.style.color = 'white';
+        btn.disabled = true;
+
+        renderPlanningSlots(); // Re-render to make recipes clickable
+        showAlert('Plan confirmed! Click any meal to view the recipe.');
+      });
 
       // Generate Grocery List button
       document.getElementById('generateGroceryBtn').addEventListener('click', () => {
