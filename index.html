@@ -4766,8 +4766,9 @@
         isPlanConfirmed = true;
         const btn = document.getElementById('confirmPlanBtn');
         btn.textContent = '✓ Confirmed';
-        btn.style.background = '#10b981';
-        btn.style.color = 'white';
+        btn.style.background = '#e8f4ed'; // TinyWins success green background
+        btn.style.border = '1px solid #a6c5a3'; // TinyWins success green border
+        btn.style.color = '#324252'; // TinyWins success green text
         btn.disabled = true;
 
         renderPlanningSlots(); // Re-render to make recipes clickable
