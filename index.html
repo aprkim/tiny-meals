@@ -4530,6 +4530,18 @@
 
       function removeFromWeekly(index) {
         weeklySchedule[index] = null;
+
+        // If plan was confirmed, reset it since we're making changes
+        if (isPlanConfirmed) {
+          isPlanConfirmed = false;
+          const btn = document.getElementById('confirmPlanBtn');
+          btn.textContent = 'Confirm Plan';
+          btn.style.background = '';
+          btn.style.border = '';
+          btn.style.color = '';
+          btn.disabled = false;
+        }
+
         saveCurrentWeekPicks();
         renderPlanningSlots();
       }
