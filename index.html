@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Tiny Meals – Weekly meal planning for couples</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
 
     <meta property="og:title" content="Tiny Meals">
     <meta property="og:description" content="Weekly meal planning, grocery lists, and recipe memory for couples.">
@@ -1410,6 +1411,24 @@
             outline: 2px solid #BF3143;
             outline-offset: 2px;
         }
+
+        /* Cropper custom styles */
+        #cropModal .cropper-view-box,
+        #cropModal .cropper-face {
+            border-radius: 0;
+        }
+        #cropModal .cropper-view-box {
+            outline: 2px solid #BF3143;
+            outline-offset: -2px;
+        }
+        #cropModal .cropper-line {
+            background-color: #BF3143;
+        }
+        #cropModal .cropper-point {
+            background-color: #BF3143;
+            width: 10px;
+            height: 10px;
+        }
     </style>
 </head>
 <body>
@@ -2007,6 +2026,20 @@
         </div>
     </div>
 
+    <!-- ==================== CROP MODAL ==================== -->
+    <div id="cropModal" class="modal-overlay" style="z-index: 1100;">
+        <div class="modal" style="max-width: 90vw; width: 500px; padding: 16px;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 16px;">Crop Photo</h3>
+            <div id="cropContainer" style="width: 100%; max-height: 60vh; background: #f0f0f0; border-radius: 8px; overflow: hidden;">
+                <img id="cropImage" style="max-width: 100%; display: block;">
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                <button onclick="cancelCrop()" style="padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #f0f4f3; color: #64748b;">Cancel</button>
+                <button onclick="applyCrop()" style="padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #BF3143; color: white;">Done</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== RECIPE DETAIL MODAL ==================== -->
     <div id="recipeDetailModal" class="modal-overlay" onclick="if(event.target === this) closeRecipeDetail()">
         <div class="modal" style="max-width: 600px;">
@@ -2173,6 +2206,9 @@
             <div id="picksRecipesList" style="max-height: 400px; overflow-y: auto;"></div>
         </div>
     </div>
+
+    <!-- Cropper.js for image cropping -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -2585,22 +2621,101 @@
       let currentRecipePhoto = null;
       let allRecipes = [];
 
+      // Cropper state
+      let cropper = null;
+      let cropCallback = null;
+      let cropOriginalFile = null;
+
+      function openCropModal(file, callback) {
+        console.log('openCropModal called with file:', file);
+        cropOriginalFile = file;
+        cropCallback = callback;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          console.log('FileReader loaded');
+          const cropImage = document.getElementById('cropImage');
+          cropImage.src = e.target.result;
+          console.log('Setting cropModal active');
+          document.getElementById('cropModal').classList.add('active');
+
+          // Initialize cropper after image loads
+          cropImage.onload = () => {
+            if (cropper) {
+              cropper.destroy();
+            }
+            cropper = new Cropper(cropImage, {
+              aspectRatio: 1,
+              viewMode: 1,
+              dragMode: 'move',
+              autoCropArea: 1,
+              restore: false,
+              guides: true,
+              center: true,
+              highlight: false,
+              cropBoxMovable: true,
+              cropBoxResizable: true,
+              toggleDragModeOnDblclick: false,
+            });
+          };
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function cancelCrop() {
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+        document.getElementById('cropModal').classList.remove('active');
+        cropCallback = null;
+        cropOriginalFile = null;
+      }
+
+      function applyCrop() {
+        if (!cropper || !cropCallback) return;
+
+        const canvas = cropper.getCroppedCanvas({
+          width: 800,
+          height: 800,
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: 'high',
+        });
+
+        canvas.toBlob((blob) => {
+          const fileName = cropOriginalFile ? cropOriginalFile.name : 'cropped.jpg';
+          const croppedFile = new File([blob], fileName, { type: 'image/jpeg' });
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+          cropCallback(croppedFile, dataUrl);
+
+          if (cropper) {
+            cropper.destroy();
+            cropper = null;
+          }
+          document.getElementById('cropModal').classList.remove('active');
+          cropCallback = null;
+          cropOriginalFile = null;
+        }, 'image/jpeg', 0.9);
+      }
+
       // Idea photo upload
       document.getElementById('ideaPhotoInput').addEventListener('change', async (e) => {
+        console.log('ideaPhotoInput change event fired', e.target.files);
         const file = e.target.files[0];
         if (file) {
-          currentIdeaPhoto = file;
-          const reader = new FileReader();
-          reader.onload = (e) => {
+          console.log('File selected:', file.name);
+          openCropModal(file, async (croppedFile, dataUrl) => {
+            currentIdeaPhoto = croppedFile;
             const preview = document.getElementById('ideaPhotoPreview');
-            preview.querySelector('img').src = e.target.result;
+            preview.querySelector('img').src = dataUrl;
             preview.style.display = 'block';
-          };
-          reader.readAsDataURL(file);
-          
-          // Auto-extract tags
-          await extractTagsFromImage(file);
+
+            // Auto-extract tags from cropped image
+            await extractTagsFromImage(croppedFile);
+          });
         }
+        // Reset input so same file can be selected again
+        e.target.value = '';
       });
 
       window.removeIdeaPhoto = function() {
@@ -2830,17 +2945,16 @@
       document.getElementById('editIdeaPhotoInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-          currentEditIdeaPhoto = file;
-          shouldDeleteIdeaPhoto = false;
-          const reader = new FileReader();
-          reader.onload = (e) => {
+          openCropModal(file, (croppedFile, dataUrl) => {
+            currentEditIdeaPhoto = croppedFile;
+            shouldDeleteIdeaPhoto = false;
             const preview = document.getElementById('editIdeaPhotoPreview');
-            preview.querySelector('img').src = e.target.result;
+            preview.querySelector('img').src = dataUrl;
             preview.style.display = 'block';
             document.getElementById('editIdeaPhotoButtonText').textContent = 'Change Photo';
-          };
-          reader.readAsDataURL(file);
+          });
         }
+        e.target.value = '';
       });
 
       window.saveIdeaEdit = async () => {
@@ -3037,17 +3151,16 @@
       document.getElementById('editRecipePhotoInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-          currentEditRecipePhoto = file;
-          shouldDeletePhoto = false;
-          const reader = new FileReader();
-          reader.onload = (e) => {
+          openCropModal(file, (croppedFile, dataUrl) => {
+            currentEditRecipePhoto = croppedFile;
+            shouldDeletePhoto = false;
             const preview = document.getElementById('editRecipePhotoPreview');
-            preview.querySelector('img').src = e.target.result;
+            preview.querySelector('img').src = dataUrl;
             preview.style.display = 'block';
             document.getElementById('editRecipePhotoButtonText').textContent = 'Change Photo';
-          };
-          reader.readAsDataURL(file);
+          });
         }
+        e.target.value = '';
       });
 
       async function saveRecipeEdit() {
@@ -3764,30 +3877,28 @@
       document.getElementById('recipePhotoInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-          currentRecipePhoto = file;
-          const reader = new FileReader();
-          reader.onload = (e) => {
+          openCropModal(file, async (croppedFile, dataUrl) => {
+            currentRecipePhoto = croppedFile;
             const preview = document.getElementById('recipePhotoPreview');
-            preview.querySelector('img').src = e.target.result;
+            preview.querySelector('img').src = dataUrl;
             preview.style.display = 'block';
-          };
-          reader.readAsDataURL(file);
-          await extractTagsFromRecipeImage(file);
+            await extractTagsFromRecipeImage(croppedFile);
+          });
         }
+        e.target.value = '';
       });
 
       document.getElementById('recipePhotoManual').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-          currentRecipePhoto = file;
-          const reader = new FileReader();
-          reader.onload = (e) => {
+          openCropModal(file, (croppedFile, dataUrl) => {
+            currentRecipePhoto = croppedFile;
             const preview = document.getElementById('recipePhotoPreviewManual');
-            preview.querySelector('img').src = e.target.result;
+            preview.querySelector('img').src = dataUrl;
             preview.style.display = 'block';
-          };
-          reader.readAsDataURL(file);
+          });
         }
+        e.target.value = '';
       });
 
       document.getElementById('addRecipeBtn').addEventListener('click', () => {
