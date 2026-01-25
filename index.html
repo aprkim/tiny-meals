@@ -1554,6 +1554,15 @@
                     <p class="header-subtitle">All your saved recipes</p>
                 </div>
 
+                <!-- Search Box -->
+                <div class="search-box" style="margin-bottom: 16px; position: relative;">
+                    <svg viewBox="0 0 24 24" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #94A3B8;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" id="recipeSearchInput" class="form-input" placeholder="Search recipes..." style="padding-left: 44px;">
+                </div>
+
                 <!-- Tag Filters -->
                 <div class="filter-bar" id="recipeFilters">
                     <span class="tag clickable active" data-filter="all">All</span>
@@ -2620,6 +2629,7 @@
       let currentRecipeType = 'manual';
       let currentRecipePhoto = null;
       let allRecipes = [];
+      let currentRecipeSearch = '';
 
       // Cropper state
       let cropper = null;
@@ -3905,6 +3915,15 @@
         document.getElementById('addRecipeModal').classList.add('active');
       });
 
+      document.getElementById('recipeSearchInput').addEventListener('input', (e) => {
+        currentRecipeSearch = e.target.value;
+        const filterBar = document.getElementById('recipeFilters');
+        const allTag = filterBar.querySelector('[data-filter="all"]');
+        const isAllActive = allTag && allTag.classList.contains('active');
+        const activeFilters = isAllActive ? [] : Array.from(filterBar.querySelectorAll('.tag.active:not([data-filter="all"])')).map(t => t.getAttribute('data-filter'));
+        filterRecipes(activeFilters);
+      });
+
       document.getElementById('closeRecipeModal').addEventListener('click', () => {
         document.getElementById('addRecipeModal').classList.remove('active');
       });
@@ -4138,16 +4157,19 @@
 
       function filterRecipes(filters) {
         const cards = document.querySelectorAll('#recipesList .card');
+        const searchTerm = currentRecipeSearch.toLowerCase().trim();
+
         cards.forEach(card => {
-          if (!filters || filters.length === 0) {
-            // Show all when no filters or "All" is selected
-            card.style.display = '';
-          } else {
-            // Show only if recipe has ALL selected tags (AND logic)
+          const recipeName = card.querySelector('div[style*="font-weight: 600"]')?.textContent?.toLowerCase() || '';
+          const matchesSearch = !searchTerm || recipeName.includes(searchTerm);
+
+          let matchesTags = true;
+          if (filters && filters.length > 0) {
             const recipeTags = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent);
-            const hasAllTags = filters.every(filter => recipeTags.includes(filter));
-            card.style.display = hasAllTags ? '' : 'none';
+            matchesTags = filters.every(filter => recipeTags.includes(filter));
           }
+
+          card.style.display = (matchesSearch && matchesTags) ? '' : 'none';
         });
       }
 
