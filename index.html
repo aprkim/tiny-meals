@@ -2190,6 +2190,15 @@
                 <button class="modal-close" id="closeSelectModal">&times;</button>
             </div>
 
+            <!-- Search Box -->
+            <div class="search-box" style="margin-bottom: 12px; position: relative;">
+                <svg viewBox="0 0 24 24" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #94A3B8;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="selectRecipeSearchInput" class="form-input" placeholder="Search recipes..." style="padding-left: 44px;">
+            </div>
+
             <div class="filter-bar" id="selectRecipeFilters" style="margin-bottom: 16px;">
                 <span class="tag clickable active" data-filter="all">All</span>
                 <span class="tag clickable" data-filter="chicken">chicken</span>
@@ -2630,6 +2639,7 @@
       let currentRecipePhoto = null;
       let allRecipes = [];
       let currentRecipeSearch = '';
+      let currentSelectRecipeSearch = '';
 
       // Cropper state
       let cropper = null;
@@ -4686,6 +4696,11 @@
         const modal = document.getElementById('selectRecipeModal');
         const list = document.getElementById('selectRecipesList');
         const filtersContainer = document.getElementById('selectRecipeFilters');
+        const searchInput = document.getElementById('selectRecipeSearchInput');
+
+        // Reset search
+        currentSelectRecipeSearch = '';
+        searchInput.value = '';
 
         list.innerHTML = '';
 
@@ -4777,16 +4792,19 @@
 
       function filterSelectRecipes(filters) {
         const cards = document.querySelectorAll('#selectRecipesList .card');
+        const searchTerm = currentSelectRecipeSearch.toLowerCase().trim();
+
         cards.forEach(card => {
-          if (!filters || filters.length === 0) {
-            // Show all when no filters or "All" is selected
-            card.style.display = '';
-          } else {
-            // Show only if recipe has ALL selected tags (AND logic)
+          const recipeName = card.querySelector('div[style*="font-weight: 600"]')?.textContent?.toLowerCase() || '';
+          const matchesSearch = !searchTerm || recipeName.includes(searchTerm);
+
+          let matchesTags = true;
+          if (filters && filters.length > 0) {
             const recipeTags = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent);
-            const hasAllTags = filters.every(filter => recipeTags.includes(filter));
-            card.style.display = hasAllTags ? '' : 'none';
+            matchesTags = filters.every(filter => recipeTags.includes(filter));
           }
+
+          card.style.display = (matchesSearch && matchesTags) ? '' : 'none';
         });
       }
 
@@ -4834,6 +4852,15 @@
       }
 
       // Close select recipe modal
+      document.getElementById('selectRecipeSearchInput').addEventListener('input', (e) => {
+        currentSelectRecipeSearch = e.target.value;
+        const filtersContainer = document.getElementById('selectRecipeFilters');
+        const allTag = filtersContainer.querySelector('[data-filter="all"]');
+        const isAllActive = allTag && allTag.classList.contains('active');
+        const activeFilters = isAllActive ? [] : Array.from(filtersContainer.querySelectorAll('.tag.active:not([data-filter="all"])')).map(t => t.getAttribute('data-filter'));
+        filterSelectRecipes(activeFilters);
+      });
+
       document.getElementById('closeSelectModal').addEventListener('click', () => {
         document.getElementById('selectRecipeModal').classList.remove('active');
       });
