@@ -4482,10 +4482,29 @@
         document.getElementById('weekDate').textContent = `Week of ${month} ${day}, ${year}`;
       }
 
+      function resetPlanConfirmation() {
+        isPlanConfirmed = false;
+        const btn = document.getElementById('confirmPlanBtn');
+        btn.textContent = 'Confirm Plan';
+        btn.style.background = '';
+        btn.style.border = '';
+        btn.style.color = '';
+        btn.disabled = false;
+        // On mobile, move Weekly Schedule back to original position
+        if (window.innerWidth < 768) {
+          const grid = document.querySelector('.selection-grid');
+          const weeklySection = document.getElementById('weeklyScheduleSection');
+          if (grid && weeklySection && grid.lastElementChild !== weeklySection) {
+            grid.appendChild(weeklySection);
+          }
+        }
+      }
+
       async function previousWeek() {
         await saveCurrentWeekPicks();
         weekOffset--;
         updateWeekDate();
+        resetPlanConfirmation();
         await loadWeekPicks();
         setupWeekPlanListener(); // Set up listener for new week
         renderPlanningSlots();
@@ -4495,6 +4514,7 @@
         await saveCurrentWeekPicks();
         weekOffset++;
         updateWeekDate();
+        resetPlanConfirmation();
         await loadWeekPicks();
         setupWeekPlanListener(); // Set up listener for new week
         renderPlanningSlots();
