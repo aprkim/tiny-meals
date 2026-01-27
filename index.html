@@ -4190,6 +4190,8 @@
       // Weekly Planning
       let aprilPicks = [];
       let nathanPicks = [];
+      let aprilSlotCount = 5;
+      let nathanSlotCount = 5;
       let weeklySchedule = Array(7).fill(null); // Monday-Sunday
       let currentSelectingUser = null;
       let currentSelectingSlot = null;
@@ -4258,6 +4260,8 @@
               // Update in-memory data
               aprilPicks = data.april_picks || [];
               nathanPicks = data.nathan_picks || [];
+              aprilSlotCount = Math.max(5, aprilPicks.length);
+              nathanSlotCount = Math.max(5, nathanPicks.length);
               weeklySchedule = data.weekly_schedule || Array(7).fill(null);
 
               // Update localStorage cache
@@ -4342,10 +4346,14 @@
         if (weeklyMealPlans[weekKey]) {
           aprilPicks = [...weeklyMealPlans[weekKey].aprilPicks];
           nathanPicks = [...weeklyMealPlans[weekKey].nathanPicks];
+          aprilSlotCount = Math.max(5, aprilPicks.length);
+          nathanSlotCount = Math.max(5, nathanPicks.length);
           weeklySchedule = weeklyMealPlans[weekKey].weeklySchedule ? [...weeklyMealPlans[weekKey].weeklySchedule] : Array(7).fill(null);
         } else {
           aprilPicks = [];
           nathanPicks = [];
+          aprilSlotCount = 5;
+          nathanSlotCount = 5;
           weeklySchedule = Array(7).fill(null);
         }
 
@@ -4360,6 +4368,8 @@
               // Update in-memory data with Firestore data
               aprilPicks = data.april_picks || [];
               nathanPicks = data.nathan_picks || [];
+              aprilSlotCount = Math.max(5, aprilPicks.length);
+              nathanSlotCount = Math.max(5, nathanPicks.length);
               weeklySchedule = data.weekly_schedule || Array(7).fill(null);
 
               // Update localStorage cache
@@ -4426,16 +4436,37 @@
         nathanContainer.innerHTML = '';
         weeklyContainer.innerHTML = '';
 
-        // Create 5 slots for each person
-        for (let i = 0; i < 5; i++) {
-          // April's slot
+        // Create slots for April
+        for (let i = 0; i < aprilSlotCount; i++) {
           const aprilSlot = createSlot(i, 'april', aprilPicks[i]);
           aprilContainer.appendChild(aprilSlot);
+        }
 
-          // Nathan's slot
+        // Add "Add more" button for April
+        const aprilAddMore = document.createElement('button');
+        aprilAddMore.className = 'add-more-btn';
+        aprilAddMore.innerHTML = '+ Add more';
+        aprilAddMore.style.cssText = 'width: 100%; padding: 12px; margin-top: 8px; background: transparent; border: 2px dashed #cbd5e1; border-radius: 12px; color: #64748b; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;';
+        aprilAddMore.onmouseover = () => { aprilAddMore.style.borderColor = '#BF3143'; aprilAddMore.style.color = '#BF3143'; };
+        aprilAddMore.onmouseout = () => { aprilAddMore.style.borderColor = '#cbd5e1'; aprilAddMore.style.color = '#64748b'; };
+        aprilAddMore.onclick = () => addMoreSlots('april');
+        aprilContainer.appendChild(aprilAddMore);
+
+        // Create slots for Nathan
+        for (let i = 0; i < nathanSlotCount; i++) {
           const nathanSlot = createSlot(i, 'nathan', nathanPicks[i]);
           nathanContainer.appendChild(nathanSlot);
         }
+
+        // Add "Add more" button for Nathan
+        const nathanAddMore = document.createElement('button');
+        nathanAddMore.className = 'add-more-btn';
+        nathanAddMore.innerHTML = '+ Add more';
+        nathanAddMore.style.cssText = 'width: 100%; padding: 12px; margin-top: 8px; background: transparent; border: 2px dashed #cbd5e1; border-radius: 12px; color: #64748b; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;';
+        nathanAddMore.onmouseover = () => { nathanAddMore.style.borderColor = '#BF3143'; nathanAddMore.style.color = '#BF3143'; };
+        nathanAddMore.onmouseout = () => { nathanAddMore.style.borderColor = '#cbd5e1'; nathanAddMore.style.color = '#64748b'; };
+        nathanAddMore.onclick = () => addMoreSlots('nathan');
+        nathanContainer.appendChild(nathanAddMore);
 
         // Create 7 weekly schedule slots (Monday-Sunday)
         const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -4833,13 +4864,22 @@
         renderPlanningSlots();
       }
 
+      function addMoreSlots(user) {
+        if (user === 'april') {
+          aprilSlotCount++;
+        } else {
+          nathanSlotCount++;
+        }
+        renderPlanningSlots();
+      }
+
       function updateCounts() {
         const aprilCount = aprilPicks.filter(r => r).length;
         const nathanCount = nathanPicks.filter(r => r).length;
         const weeklyCount = weeklySchedule.filter(r => r).length;
 
-        document.getElementById('aprilCount').textContent = `${aprilCount}/5`;
-        document.getElementById('nathanCount').textContent = `${nathanCount}/5`;
+        document.getElementById('aprilCount').textContent = `${aprilCount}/${aprilSlotCount}`;
+        document.getElementById('nathanCount').textContent = `${nathanCount}/${nathanSlotCount}`;
         document.getElementById('weeklyCount').textContent = `${weeklyCount}/7`;
 
         // Show generate button if there's at least one meal in the weekly schedule
