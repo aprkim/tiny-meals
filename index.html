@@ -2205,9 +2205,10 @@
     <div class="modal-overlay" id="dayPickerModal">
         <div class="modal" style="max-width: 320px;">
             <div class="modal-header">
-                <h2 class="modal-title">Add meal for which day?</h2>
+                <h2 class="modal-title">Assign to which day?</h2>
                 <button class="modal-close" id="closeDayPickerModal">&times;</button>
             </div>
+            <div id="selectedRecipeName" style="font-weight: 600; margin-bottom: 12px; padding: 10px; background: #f8fafc; border-radius: 8px; text-align: center;"></div>
             <div id="dayPickerList" style="display: flex; flex-direction: column; gap: 8px;">
                 <button class="day-picker-btn" data-day="0">Monday</button>
                 <button class="day-picker-btn" data-day="1">Tuesday</button>
@@ -4239,6 +4240,8 @@
       const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       let currentSelectingUser = null;
       let currentSelectingSlot = null;
+      let isAddingWeeklyMeal = false;
+      let pendingWeeklyRecipe = null;
       let weeklyMealPlans = {}; // Store meal plans by week key
       let draggedRecipe = null;
       let draggedFromUser = null;
@@ -4555,7 +4558,7 @@
         weeklyAddMore.style.cssText = 'width: 100%; padding: 12px; margin-top: 8px; background: transparent; border: 2px dashed #cbd5e1; border-radius: 12px; color: #64748b; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;';
         weeklyAddMore.onmouseover = () => { weeklyAddMore.style.borderColor = '#BF3143'; weeklyAddMore.style.color = '#BF3143'; };
         weeklyAddMore.onmouseout = () => { weeklyAddMore.style.borderColor = '#cbd5e1'; weeklyAddMore.style.color = '#64748b'; };
-        weeklyAddMore.onclick = () => openDayPicker();
+        weeklyAddMore.onclick = () => openWeeklyRecipePicker();
         weeklyContainer.appendChild(weeklyAddMore);
 
         updateCounts();
@@ -4933,6 +4936,15 @@
       }
 
       function selectRecipeForSlot(recipe) {
+        // Check if we're adding a weekly meal
+        if (isAddingWeeklyMeal) {
+          pendingWeeklyRecipe = recipe;
+          document.getElementById('selectRecipeModal').classList.remove('active');
+          // Now show day picker to select which day
+          openDayPicker();
+          return;
+        }
+
         if (currentSelectingUser === 'april') {
           aprilPicks[currentSelectingSlot] = recipe;
         } else {
@@ -4966,13 +4978,33 @@
         renderPlanningSlots();
       }
 
+      function openWeeklyRecipePicker() {
+        isAddingWeeklyMeal = true;
+        pendingWeeklyRecipe = null;
+        // Reuse the existing recipe picker
+        openRecipePicker(null, null);
+      }
+
       function openDayPicker() {
+        // Show the selected recipe name
+        const recipeNameEl = document.getElementById('selectedRecipeName');
+        if (pendingWeeklyRecipe) {
+          recipeNameEl.textContent = pendingWeeklyRecipe.name;
+          recipeNameEl.style.display = 'block';
+        } else {
+          recipeNameEl.style.display = 'none';
+        }
         document.getElementById('dayPickerModal').classList.add('active');
       }
 
       function addMoreWeeklySlots(dayIndex) {
-        weeklySchedule.push({ dayIndex: dayIndex, recipe: null });
+        if (pendingWeeklyRecipe) {
+          weeklySchedule.push({ dayIndex: dayIndex, recipe: pendingWeeklyRecipe });
+          pendingWeeklyRecipe = null;
+        }
+        isAddingWeeklyMeal = false;
         document.getElementById('dayPickerModal').classList.remove('active');
+        saveCurrentWeekPicks();
         renderPlanningSlots();
       }
 
@@ -5010,6 +5042,8 @@
 
       document.getElementById('closeDayPickerModal').addEventListener('click', () => {
         document.getElementById('dayPickerModal').classList.remove('active');
+        isAddingWeeklyMeal = false;
+        pendingWeeklyRecipe = null;
       });
 
       document.querySelectorAll('.day-picker-btn').forEach(btn => {
