@@ -4999,10 +4999,10 @@
 
         const modal = document.getElementById('selectFromPicksModal');
         const list = document.getElementById('picksRecipesList');
-        const dayTitle = document.getElementById('dayNameTitle');
+        const headerEl = modal.querySelector('.modal-header');
 
-        // Hide the day name part, just show "Select Recipe"
-        dayTitle.parentElement.innerHTML = '<h2 class="modal-title">Select Recipe</h2><button class="modal-close" id="closePicksModal">&times;</button>';
+        // Set title to just "Select Recipe"
+        headerEl.innerHTML = '<h2 class="modal-title">Select Recipe</h2><button class="modal-close" id="closePicksModal">&times;</button>';
 
         // Re-attach close handler
         document.getElementById('closePicksModal').addEventListener('click', () => {
