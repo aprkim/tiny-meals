@@ -1349,6 +1349,16 @@
                 font-size: 16px; /* Prevents iOS zoom on focus */
                 min-height: 44px;
             }
+
+            /* When plan is confirmed, show Weekly Schedule at top on mobile */
+            .selection-grid.plan-confirmed {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .selection-grid.plan-confirmed #weeklyScheduleSection {
+                order: -1;
+            }
         }
 
         /* Desktop enhancements */
@@ -1660,7 +1670,7 @@
                         </div>
 
                         <!-- Weekly Schedule -->
-                        <div class="selection-section">
+                        <div class="selection-section" id="weeklyScheduleSection">
                             <div class="selection-header">
                                 <span class="selection-title">Weekly Schedule</span>
                                 <span class="selection-count" id="weeklyCount">0/7</span>
@@ -4817,6 +4827,8 @@
           btn.style.border = '';
           btn.style.color = '';
           btn.disabled = false;
+          // Remove mobile reordering
+          document.querySelector('.selection-grid').classList.remove('plan-confirmed');
         }
 
         saveCurrentWeekPicks();
@@ -5198,6 +5210,9 @@
         btn.style.border = '1px solid #a6c5a3'; // TinyWins success green border
         btn.style.color = '#324252'; // TinyWins success green text
         btn.disabled = true;
+
+        // On mobile, move Weekly Schedule to top
+        document.querySelector('.selection-grid').classList.add('plan-confirmed');
 
         renderPlanningSlots(); // Re-render to make recipes clickable
         showAlert('Plan confirmed! Click any meal to view the recipe.');
