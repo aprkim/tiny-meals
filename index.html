@@ -465,6 +465,25 @@
             background: #FEF7F8;
         }
 
+        .day-picker-btn {
+            padding: 14px 16px;
+            background: #f8fafc;
+            color: #334155;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .day-picker-btn:hover {
+            border-color: #BF3143;
+            color: #BF3143;
+            background: #FEF7F8;
+        }
+
         .empty-state {
             text-align: center;
             padding: 20px;
@@ -2178,6 +2197,25 @@
             <div class="modal-actions" style="display: flex; gap: 12px; margin-top: 24px;">
                 <button class="btn-primary" onclick="saveIdeaEdit()" style="flex: 1;">Save</button>
                 <button class="btn-secondary" onclick="closeEditIdea()" style="flex: 1;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== DAY PICKER MODAL ==================== -->
+    <div class="modal-overlay" id="dayPickerModal">
+        <div class="modal" style="max-width: 320px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Add meal for which day?</h2>
+                <button class="modal-close" id="closeDayPickerModal">&times;</button>
+            </div>
+            <div id="dayPickerList" style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="day-picker-btn" data-day="0">Monday</button>
+                <button class="day-picker-btn" data-day="1">Tuesday</button>
+                <button class="day-picker-btn" data-day="2">Wednesday</button>
+                <button class="day-picker-btn" data-day="3">Thursday</button>
+                <button class="day-picker-btn" data-day="4">Friday</button>
+                <button class="day-picker-btn" data-day="5">Saturday</button>
+                <button class="day-picker-btn" data-day="6">Sunday</button>
             </div>
         </div>
     </div>
@@ -4192,7 +4230,13 @@
       let nathanPicks = [];
       let aprilSlotCount = 5;
       let nathanSlotCount = 5;
-      let weeklySchedule = Array(7).fill(null); // Monday-Sunday
+      // Weekly schedule: array of {dayIndex, recipe} objects
+      let weeklySchedule = [
+        {dayIndex: 0, recipe: null}, {dayIndex: 1, recipe: null}, {dayIndex: 2, recipe: null},
+        {dayIndex: 3, recipe: null}, {dayIndex: 4, recipe: null}, {dayIndex: 5, recipe: null},
+        {dayIndex: 6, recipe: null}
+      ];
+      const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       let currentSelectingUser = null;
       let currentSelectingSlot = null;
       let weeklyMealPlans = {}; // Store meal plans by week key
@@ -4202,6 +4246,31 @@
 
       let weekPlanListener = null; // Store listener to unsubscribe when week changes
       let isLocalUpdate = false; // Flag to prevent listener from triggering on own changes
+
+      // Migrate old format (array of recipes) to new format (array of {dayIndex, recipe})
+      function migrateWeeklySchedule(schedule) {
+        if (!schedule || !Array.isArray(schedule)) {
+          return [
+            {dayIndex: 0, recipe: null}, {dayIndex: 1, recipe: null}, {dayIndex: 2, recipe: null},
+            {dayIndex: 3, recipe: null}, {dayIndex: 4, recipe: null}, {dayIndex: 5, recipe: null},
+            {dayIndex: 6, recipe: null}
+          ];
+        }
+        // Check if already in new format
+        if (schedule.length > 0 && schedule[0] && typeof schedule[0].dayIndex === 'number') {
+          return schedule;
+        }
+        // Old format: simple array where index = day
+        return schedule.map((recipe, index) => ({
+          dayIndex: index < 7 ? index : 0,
+          recipe: recipe || null
+        }));
+      }
+
+      // Convert new format back to simple array for saving (backward compatible)
+      function serializeWeeklySchedule(schedule) {
+        return schedule.map(s => s.recipe);
+      }
 
       async function initializeWeeklyPlanning() {
         // Update user names in the planning view
@@ -4262,7 +4331,7 @@
               nathanPicks = data.nathan_picks || [];
               aprilSlotCount = Math.max(5, aprilPicks.length);
               nathanSlotCount = Math.max(5, nathanPicks.length);
-              weeklySchedule = data.weekly_schedule || Array(7).fill(null);
+              weeklySchedule = migrateWeeklySchedule(data.weekly_schedule);
 
               // Update localStorage cache
               weeklyMealPlans[weekKey] = {
@@ -4348,13 +4417,13 @@
           nathanPicks = [...weeklyMealPlans[weekKey].nathanPicks];
           aprilSlotCount = Math.max(5, aprilPicks.length);
           nathanSlotCount = Math.max(5, nathanPicks.length);
-          weeklySchedule = weeklyMealPlans[weekKey].weeklySchedule ? [...weeklyMealPlans[weekKey].weeklySchedule] : Array(7).fill(null);
+          weeklySchedule = migrateWeeklySchedule(weeklyMealPlans[weekKey].weeklySchedule);
         } else {
           aprilPicks = [];
           nathanPicks = [];
           aprilSlotCount = 5;
           nathanSlotCount = 5;
-          weeklySchedule = Array(7).fill(null);
+          weeklySchedule = migrateWeeklySchedule(null);
         }
 
         // Then fetch from Firestore to get latest data
@@ -4370,7 +4439,7 @@
               nathanPicks = data.nathan_picks || [];
               aprilSlotCount = Math.max(5, aprilPicks.length);
               nathanSlotCount = Math.max(5, nathanPicks.length);
-              weeklySchedule = data.weekly_schedule || Array(7).fill(null);
+              weeklySchedule = migrateWeeklySchedule(data.weekly_schedule);
 
               // Update localStorage cache
               weeklyMealPlans[weekKey] = {
@@ -4468,12 +4537,26 @@
         nathanAddMore.onclick = () => addMoreSlots('nathan');
         nathanContainer.appendChild(nathanAddMore);
 
-        // Create 7 weekly schedule slots (Monday-Sunday)
-        const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        for (let i = 0; i < 7; i++) {
-          const daySlot = createWeeklySlot(i, dayNames[i], weeklySchedule[i]);
-          weeklyContainer.appendChild(daySlot);
+        // Create weekly schedule slots grouped by day
+        for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+          // Get all slots for this day
+          const daySlots = weeklySchedule.filter(s => s.dayIndex === dayIndex);
+          daySlots.forEach((slot, slotIndex) => {
+            const actualIndex = weeklySchedule.indexOf(slot);
+            const daySlot = createWeeklySlot(actualIndex, dayNames[dayIndex], slot.recipe, slotIndex > 0);
+            weeklyContainer.appendChild(daySlot);
+          });
         }
+
+        // Add "Add more" button for weekly schedule
+        const weeklyAddMore = document.createElement('button');
+        weeklyAddMore.className = 'add-more-btn';
+        weeklyAddMore.innerHTML = '+ Add more';
+        weeklyAddMore.style.cssText = 'width: 100%; padding: 12px; margin-top: 8px; background: transparent; border: 2px dashed #cbd5e1; border-radius: 12px; color: #64748b; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;';
+        weeklyAddMore.onmouseover = () => { weeklyAddMore.style.borderColor = '#BF3143'; weeklyAddMore.style.color = '#BF3143'; };
+        weeklyAddMore.onmouseout = () => { weeklyAddMore.style.borderColor = '#cbd5e1'; weeklyAddMore.style.color = '#64748b'; };
+        weeklyAddMore.onclick = () => openDayPicker();
+        weeklyContainer.appendChild(weeklyAddMore);
 
         updateCounts();
       }
@@ -4560,7 +4643,7 @@
         return slot;
       }
 
-      function createWeeklySlot(index, dayName, recipe) {
+      function createWeeklySlot(index, dayName, recipe, isExtra = false) {
         const slot = document.createElement('div');
         slot.className = 'weekly-slot';
 
@@ -4583,11 +4666,14 @@
 
           if (draggedRecipe) {
             // Add to weekly schedule
-            weeklySchedule[index] = draggedRecipe;
+            weeklySchedule[index].recipe = draggedRecipe;
             saveCurrentWeekPicks();
             renderPlanningSlots();
           }
         });
+
+        // Show day name only for first slot of each day
+        const dayLabel = isExtra ? '' : `<div style="font-size: 11px; font-weight: 600; color: #64748B; margin-bottom: ${recipe ? '6px' : '4px'};">${dayName}</div>`;
 
         if (recipe) {
           slot.style.border = '2px solid #e2e8f0';
@@ -4595,7 +4681,7 @@
           slot.style.cursor = 'pointer';
 
           slot.innerHTML = `
-            <div style="font-size: 11px; font-weight: 600; color: #64748B; margin-bottom: 6px;">${dayName}</div>
+            ${dayLabel}
             <div style="display: flex; align-items: center; gap: 8px;">
               ${recipe.photos?.length > 0
                 ? `<img src="${recipe.photos[0]}" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">`
@@ -4628,7 +4714,7 @@
           };
         } else {
           slot.innerHTML = `
-            <div style="font-size: 11px; font-weight: 600; color: #64748B; margin-bottom: 4px;">${dayName}</div>
+            ${dayLabel}
             <div style="text-align: center; color: #cbd5e1; padding: 8px 0;">
               <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2;">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -4690,7 +4776,7 @@
           `;
 
           card.onclick = () => {
-            weeklySchedule[dayIndex] = recipe;
+            weeklySchedule[dayIndex].recipe = recipe;
             saveCurrentWeekPicks();
             renderPlanningSlots();
             modal.classList.remove('active');
@@ -4703,7 +4789,14 @@
       }
 
       function removeFromWeekly(index) {
-        weeklySchedule[index] = null;
+        // Check if this is an extra slot (beyond the base 7)
+        if (index >= 7) {
+          // Remove the extra slot entirely
+          weeklySchedule.splice(index, 1);
+        } else {
+          // For base slots, just clear the recipe
+          weeklySchedule[index].recipe = null;
+        }
 
         // If plan was confirmed, reset it since we're making changes
         if (isPlanConfirmed) {
@@ -4873,14 +4966,24 @@
         renderPlanningSlots();
       }
 
+      function openDayPicker() {
+        document.getElementById('dayPickerModal').classList.add('active');
+      }
+
+      function addMoreWeeklySlots(dayIndex) {
+        weeklySchedule.push({ dayIndex: dayIndex, recipe: null });
+        document.getElementById('dayPickerModal').classList.remove('active');
+        renderPlanningSlots();
+      }
+
       function updateCounts() {
         const aprilCount = aprilPicks.filter(r => r).length;
         const nathanCount = nathanPicks.filter(r => r).length;
-        const weeklyCount = weeklySchedule.filter(r => r).length;
+        const weeklyCount = weeklySchedule.filter(s => s && s.recipe).length;
 
         document.getElementById('aprilCount').textContent = `${aprilCount}/${aprilSlotCount}`;
         document.getElementById('nathanCount').textContent = `${nathanCount}/${nathanSlotCount}`;
-        document.getElementById('weeklyCount').textContent = `${weeklyCount}/7`;
+        document.getElementById('weeklyCount').textContent = `${weeklyCount}/${weeklySchedule.length}`;
 
         // Show generate button if there's at least one meal in the weekly schedule
         const generateBtn = document.getElementById('generateGroceryBtn');
@@ -4903,6 +5006,17 @@
 
       document.getElementById('closeSelectModal').addEventListener('click', () => {
         document.getElementById('selectRecipeModal').classList.remove('active');
+      });
+
+      document.getElementById('closeDayPickerModal').addEventListener('click', () => {
+        document.getElementById('dayPickerModal').classList.remove('active');
+      });
+
+      document.querySelectorAll('.day-picker-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayIndex = parseInt(btn.getAttribute('data-day'));
+          addMoreWeeklySlots(dayIndex);
+        });
       });
 
       // Close picks selector modal
@@ -4968,7 +5082,7 @@
 
       // Confirm Plan button
       document.getElementById('confirmPlanBtn').addEventListener('click', () => {
-        const weeklyRecipes = weeklySchedule.filter(r => r);
+        const weeklyRecipes = weeklySchedule.filter(s => s && s.recipe).map(s => s.recipe);
 
         if (weeklyRecipes.length === 0) {
           showAlert('Please add recipes to your weekly schedule first.');
@@ -4990,7 +5104,7 @@
       // Generate Grocery List button
       document.getElementById('generateGroceryBtn').addEventListener('click', () => {
         // Get all recipes from weekly schedule
-        const weeklyRecipes = weeklySchedule.filter(r => r);
+        const weeklyRecipes = weeklySchedule.filter(s => s && s.recipe).map(s => s.recipe);
 
         if (weeklyRecipes.length === 0) {
           showAlert('Please add recipes to your weekly schedule first.');
