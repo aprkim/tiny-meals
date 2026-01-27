@@ -1350,15 +1350,6 @@
                 min-height: 44px;
             }
 
-            /* When plan is confirmed, show Weekly Schedule at top on mobile */
-            .selection-grid.plan-confirmed {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .selection-grid.plan-confirmed #weeklyScheduleSection {
-                order: -1;
-            }
         }
 
         /* Desktop enhancements */
@@ -4827,8 +4818,12 @@
           btn.style.border = '';
           btn.style.color = '';
           btn.disabled = false;
-          // Remove mobile reordering
-          document.querySelector('.selection-grid').classList.remove('plan-confirmed');
+          // On mobile, move Weekly Schedule back to original position (last)
+          if (window.innerWidth < 768) {
+            const grid = document.querySelector('.selection-grid');
+            const weeklySection = document.getElementById('weeklyScheduleSection');
+            grid.appendChild(weeklySection);
+          }
         }
 
         saveCurrentWeekPicks();
@@ -5212,7 +5207,11 @@
         btn.disabled = true;
 
         // On mobile, move Weekly Schedule to top
-        document.querySelector('.selection-grid').classList.add('plan-confirmed');
+        if (window.innerWidth < 768) {
+          const grid = document.querySelector('.selection-grid');
+          const weeklySection = document.getElementById('weeklyScheduleSection');
+          grid.insertBefore(weeklySection, grid.firstChild);
+        }
 
         renderPlanningSlots(); // Re-render to make recipes clickable
         showAlert('Plan confirmed! Click any meal to view the recipe.');
