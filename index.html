@@ -4237,11 +4237,11 @@
 
         cards.forEach(card => {
           const recipeName = card.querySelector('div[style*="font-weight: 600"]')?.textContent?.toLowerCase() || '';
-          const matchesSearch = !searchTerm || recipeName.includes(searchTerm);
+          const recipeTags = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent.toLowerCase());
+          const matchesSearch = !searchTerm || recipeName.includes(searchTerm) || recipeTags.some(t => t.includes(searchTerm));
 
           let matchesTags = true;
           if (filters && filters.length > 0) {
-            const recipeTags = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent);
             matchesTags = filters.every(filter => recipeTags.includes(filter));
           }
 
