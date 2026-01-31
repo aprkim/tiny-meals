@@ -4366,11 +4366,19 @@
               nathanSlotCount = Math.max(5, nathanPicks.length);
               weeklySchedule = migrateWeeklySchedule(data.weekly_schedule);
 
+              // Restore confirmed state
+              if (data.confirmed) {
+                restorePlanConfirmation();
+              } else {
+                resetPlanConfirmation();
+              }
+
               // Update localStorage cache
               weeklyMealPlans[weekKey] = {
                 aprilPicks: [...aprilPicks],
                 nathanPicks: [...nathanPicks],
-                weeklySchedule: [...weeklySchedule]
+                weeklySchedule: [...weeklySchedule],
+                confirmed: !!data.confirmed
               };
               localStorage.setItem('weeklyMealPlans', JSON.stringify(weeklyMealPlans));
 
@@ -4533,7 +4541,8 @@
         const planData = {
           aprilPicks: [...aprilPicks],
           nathanPicks: [...nathanPicks],
-          weeklySchedule: [...weeklySchedule]
+          weeklySchedule: [...weeklySchedule],
+          confirmed: isPlanConfirmed
         };
         weeklyMealPlans[weekKey] = planData;
         localStorage.setItem('weeklyMealPlans', JSON.stringify(weeklyMealPlans));
@@ -4549,6 +4558,7 @@
               april_picks: planData.aprilPicks,
               nathan_picks: planData.nathanPicks,
               weekly_schedule: planData.weeklySchedule,
+              confirmed: isPlanConfirmed,
               updated_at: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
             console.log('✅ Saved weekly plan to Firestore:', weekKey);
@@ -4578,12 +4588,18 @@
           aprilSlotCount = Math.max(5, aprilPicks.length);
           nathanSlotCount = Math.max(5, nathanPicks.length);
           weeklySchedule = migrateWeeklySchedule(weeklyMealPlans[weekKey].weeklySchedule);
+          if (weeklyMealPlans[weekKey].confirmed) {
+            restorePlanConfirmation();
+          } else {
+            resetPlanConfirmation();
+          }
         } else {
           aprilPicks = [];
           nathanPicks = [];
           aprilSlotCount = 5;
           nathanSlotCount = 5;
           weeklySchedule = migrateWeeklySchedule(null);
+          resetPlanConfirmation();
         }
 
         // Then fetch from Firestore to get latest data
@@ -4601,11 +4617,19 @@
               nathanSlotCount = Math.max(5, nathanPicks.length);
               weeklySchedule = migrateWeeklySchedule(data.weekly_schedule);
 
+              // Restore confirmed state
+              if (data.confirmed) {
+                restorePlanConfirmation();
+              } else {
+                resetPlanConfirmation();
+              }
+
               // Update localStorage cache
               weeklyMealPlans[weekKey] = {
                 aprilPicks: [...aprilPicks],
                 nathanPicks: [...nathanPicks],
-                weeklySchedule: [...weeklySchedule]
+                weeklySchedule: [...weeklySchedule],
+                confirmed: !!data.confirmed
               };
               localStorage.setItem('weeklyMealPlans', JSON.stringify(weeklyMealPlans));
 
@@ -4654,11 +4678,26 @@
         }
       }
 
+      function restorePlanConfirmation() {
+        isPlanConfirmed = true;
+        const btn = document.getElementById('confirmPlanBtn');
+        btn.textContent = '✓ Confirmed';
+        btn.style.background = '#e8f4ed';
+        btn.style.border = '1px solid #a6c5a3';
+        btn.style.color = '#324252';
+        btn.disabled = true;
+        // On mobile, move Weekly Schedule to top
+        if (window.innerWidth < 768) {
+          const grid = document.querySelector('.selection-grid');
+          const weeklySection = document.getElementById('weeklyScheduleSection');
+          grid.insertBefore(weeklySection, grid.firstChild);
+        }
+      }
+
       async function previousWeek() {
         await saveCurrentWeekPicks();
         weekOffset--;
         updateWeekDate();
-        resetPlanConfirmation();
         await loadWeekPicks();
         setupWeekPlanListener(); // Set up listener for new week
         renderPlanningSlots();
@@ -4668,7 +4707,6 @@
         await saveCurrentWeekPicks();
         weekOffset++;
         updateWeekDate();
-        resetPlanConfirmation();
         await loadWeekPicks();
         setupWeekPlanListener(); // Set up listener for new week
         renderPlanningSlots();
@@ -5388,6 +5426,7 @@
         }
 
         renderPlanningSlots(); // Re-render to make recipes clickable
+        saveCurrentWeekPicks(); // Persist confirmed state
         showAlert('Plan confirmed! Click any meal to view the recipe.');
       });
 
