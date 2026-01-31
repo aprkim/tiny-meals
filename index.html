@@ -4319,6 +4319,9 @@
         // Load saved meal plans from Firestore/localStorage
         await loadWeekPicks();
 
+        // Roll over unchosen picks to next week (runs on Saturday)
+        await rolloverUnchosenPicks();
+
         // Set up real-time sync for current week
         setupWeekPlanListener();
 
@@ -4397,6 +4400,134 @@
         return `${year}-${month}-${day}`;
       }
 
+      function getWeekKeyForOffset(offset) {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const sunday = new Date(today);
+        sunday.setDate(today.getDate() - dayOfWeek + (offset * 7));
+        const year = sunday.getFullYear();
+        const month = String(sunday.getMonth() + 1).padStart(2, '0');
+        const day = String(sunday.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      async function rolloverUnchosenPicks() {
+        // Only run on Saturday (day 6)
+        const today = new Date();
+        if (today.getDay() !== 6) return;
+        // Only run when viewing current week
+        if (weekOffset !== 0) return;
+
+        const currentWeekKey = getWeekKeyForOffset(0);
+        const nextWeekKey = getWeekKeyForOffset(1);
+        const userId = getEffectiveUserId();
+        if (!userId) return;
+
+        // Load current week data from Firestore
+        try {
+          const currentDoc = await db.collection('weekly_plans').doc(`${userId}_${currentWeekKey}`).get();
+          if (!currentDoc.exists) return;
+          const currentData = currentDoc.data();
+
+          // Already rolled over this week
+          if (currentData.rolled_over) return;
+
+          const curAprilPicks = currentData.april_picks || [];
+          const curNathanPicks = currentData.nathan_picks || [];
+          const curSchedule = currentData.weekly_schedule || [];
+
+          // Build set of chosen recipe identifiers from weekly schedule
+          const chosenIds = new Set();
+          curSchedule.forEach(slot => {
+            if (slot && slot.recipe) {
+              if (slot.recipe.id) chosenIds.add(slot.recipe.id);
+              if (slot.recipe.name) chosenIds.add('name:' + slot.recipe.name);
+            }
+          });
+
+          // Find unchosen picks
+          function isUnchosen(pick) {
+            if (!pick) return false;
+            if (pick.id && chosenIds.has(pick.id)) return false;
+            if (pick.name && chosenIds.has('name:' + pick.name)) return false;
+            return true;
+          }
+
+          const unchosenApril = curAprilPicks.filter(isUnchosen);
+          const unchosenNathan = curNathanPicks.filter(isUnchosen);
+
+          if (unchosenApril.length === 0 && unchosenNathan.length === 0) {
+            // Nothing to roll over, but mark as checked
+            await db.collection('weekly_plans').doc(`${userId}_${currentWeekKey}`).update({
+              rolled_over: true
+            });
+            return;
+          }
+
+          // Load next week data
+          const nextDoc = await db.collection('weekly_plans').doc(`${userId}_${nextWeekKey}`).get();
+          let nextAprilPicks = [];
+          let nextNathanPicks = [];
+          let nextSchedule = migrateWeeklySchedule(null);
+
+          if (nextDoc.exists) {
+            const nextData = nextDoc.data();
+            nextAprilPicks = nextData.april_picks || [];
+            nextNathanPicks = nextData.nathan_picks || [];
+            nextSchedule = migrateWeeklySchedule(nextData.weekly_schedule);
+          }
+
+          // Avoid duplicates: check by id or name
+          function alreadyExists(pick, existingPicks) {
+            return existingPicks.some(p => {
+              if (!p) return false;
+              if (pick.id && p.id && pick.id === p.id) return true;
+              if (pick.name && p.name && pick.name === p.name) return true;
+              return false;
+            });
+          }
+
+          unchosenApril.forEach(pick => {
+            if (!alreadyExists(pick, nextAprilPicks)) {
+              nextAprilPicks.push(pick);
+            }
+          });
+
+          unchosenNathan.forEach(pick => {
+            if (!alreadyExists(pick, nextNathanPicks)) {
+              nextNathanPicks.push(pick);
+            }
+          });
+
+          // Save next week to Firestore
+          await db.collection('weekly_plans').doc(`${userId}_${nextWeekKey}`).set({
+            user_id: userId,
+            week_key: nextWeekKey,
+            april_picks: nextAprilPicks,
+            nathan_picks: nextNathanPicks,
+            weekly_schedule: nextSchedule,
+            updated_at: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+
+          // Update localStorage cache for next week
+          weeklyMealPlans[nextWeekKey] = {
+            aprilPicks: [...nextAprilPicks],
+            nathanPicks: [...nextNathanPicks],
+            weeklySchedule: [...nextSchedule]
+          };
+          localStorage.setItem('weeklyMealPlans', JSON.stringify(weeklyMealPlans));
+
+          // Mark current week as rolled over
+          await db.collection('weekly_plans').doc(`${userId}_${currentWeekKey}`).update({
+            rolled_over: true
+          });
+
+          console.log(`✅ Rolled over ${unchosenApril.length} April picks and ${unchosenNathan.length} Nathan picks to ${nextWeekKey}`);
+        } catch (error) {
+          console.error('❌ Error during rollover:', error);
+        }
+      }
+
       async function saveCurrentWeekPicks() {
         const weekKey = getWeekKey();
         const planData = {
@@ -4419,7 +4550,7 @@
               nathan_picks: planData.nathanPicks,
               weekly_schedule: planData.weeklySchedule,
               updated_at: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            }, { merge: true });
             console.log('✅ Saved weekly plan to Firestore:', weekKey);
             // Reset flag after a short delay to allow listener to fire
             setTimeout(() => { isLocalUpdate = false; }, 500);
