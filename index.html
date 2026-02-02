@@ -3307,11 +3307,12 @@
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 5000);
-          const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+          const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
           const response = await fetch(proxyUrl, { signal: controller.signal });
           clearTimeout(timeoutId);
           if (!response.ok) return null;
-          const html = await response.text();
+          const data = await response.json();
+          const html = data.contents || '';
           const match = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
           if (match && match[1]) {
