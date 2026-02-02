@@ -3304,31 +3304,54 @@
 
       // Fetch Open Graph image from a URL via CORS proxy
       async function fetchOgImage(url) {
-        try {
-          console.log('🖼️ Fetching OG image for:', url);
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
-          const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-          const response = await fetch(proxyUrl, { signal: controller.signal });
-          clearTimeout(timeoutId);
-          console.log('🖼️ Proxy response status:', response.status);
-          if (!response.ok) return null;
-          const data = await response.json();
-          const html = data.contents || '';
-          console.log('🖼️ HTML length:', html.length);
+        function extractOgImage(html, url) {
           const match = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
           if (match && match[1]) {
-            console.log('🖼️ Found OG image:', match[1]);
-            // Handle relative URLs
             if (match[1].startsWith('//')) return 'https:' + match[1];
-            if (match[1].startsWith('/')) {
-              const origin = new URL(url).origin;
-              return origin + match[1];
-            }
+            if (match[1].startsWith('/')) return new URL(url).origin + match[1];
             return match[1];
           }
-          console.log('🖼️ No OG image found in HTML');
+          return null;
+        }
+
+        async function tryProxy(proxyUrl, parseJson) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          try {
+            const response = await fetch(proxyUrl, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!response.ok) return null;
+            if (parseJson) {
+              const data = await response.json();
+              return data.contents || '';
+            }
+            return await response.text();
+          } catch (e) {
+            clearTimeout(timeoutId);
+            return null;
+          }
+        }
+
+        try {
+          console.log('🖼️ Fetching OG image for:', url);
+          const encoded = encodeURIComponent(url);
+
+          // Try allorigins JSON endpoint
+          let html = await tryProxy('https://api.allorigins.win/get?url=' + encoded, true);
+          if (html) {
+            const img = extractOgImage(html, url);
+            if (img) { console.log('🖼️ Found OG image:', img); return img; }
+          }
+
+          // Fallback: corsproxy.io
+          html = await tryProxy('https://corsproxy.io/?' + encoded, false);
+          if (html) {
+            const img = extractOgImage(html, url);
+            if (img) { console.log('🖼️ Found OG image (fallback):', img); return img; }
+          }
+
+          console.log('🖼️ No OG image found');
           return null;
         } catch (error) {
           console.error('🖼️ Error fetching OG image:', error);
