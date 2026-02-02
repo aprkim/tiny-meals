@@ -3304,53 +3304,14 @@
 
       // Fetch Open Graph image from a URL via CORS proxy
       async function fetchOgImage(url) {
-        function extractOgImage(html, url) {
-          const match = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-            || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
-          if (match && match[1]) {
-            if (match[1].startsWith('//')) return 'https:' + match[1];
-            if (match[1].startsWith('/')) return new URL(url).origin + match[1];
-            return match[1];
-          }
-          return null;
-        }
-
-        async function tryProxy(proxyUrl, parseJson) {
+        try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 10000);
-          try {
-            const response = await fetch(proxyUrl, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (!response.ok) return null;
-            if (parseJson) {
-              const data = await response.json();
-              return data.contents || '';
-            }
-            return await response.text();
-          } catch (e) {
-            clearTimeout(timeoutId);
-            return null;
-          }
-        }
-
-        try {
-          const encoded = encodeURIComponent(url);
-
-          // Try allorigins JSON endpoint
-          let html = await tryProxy('https://api.allorigins.win/get?url=' + encoded, true);
-          if (html) {
-            const img = extractOgImage(html, url);
-            if (img) return img;
-          }
-
-          // Fallback: corsproxy.io
-          html = await tryProxy('https://corsproxy.io/?' + encoded, false);
-          if (html) {
-            const img = extractOgImage(html, url);
-            if (img) return img;
-          }
-
-          return null;
+          const response = await fetch('https://api.microlink.io?url=' + encodeURIComponent(url), { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (!response.ok) return null;
+          const data = await response.json();
+          return data?.data?.image?.url || null;
         } catch (error) {
           console.error('Error fetching OG image:', error);
           return null;
