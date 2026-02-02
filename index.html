@@ -3334,27 +3334,25 @@
         }
 
         try {
-          console.log('🖼️ Fetching OG image for:', url);
           const encoded = encodeURIComponent(url);
 
           // Try allorigins JSON endpoint
           let html = await tryProxy('https://api.allorigins.win/get?url=' + encoded, true);
           if (html) {
             const img = extractOgImage(html, url);
-            if (img) { console.log('🖼️ Found OG image:', img); return img; }
+            if (img) return img;
           }
 
           // Fallback: corsproxy.io
           html = await tryProxy('https://corsproxy.io/?' + encoded, false);
           if (html) {
             const img = extractOgImage(html, url);
-            if (img) { console.log('🖼️ Found OG image (fallback):', img); return img; }
+            if (img) return img;
           }
 
-          console.log('🖼️ No OG image found');
           return null;
         } catch (error) {
-          console.error('🖼️ Error fetching OG image:', error);
+          console.error('Error fetching OG image:', error);
           return null;
         }
       }
