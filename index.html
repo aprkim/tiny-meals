@@ -2035,7 +2035,7 @@
                     <small style="color: #94A3B8; font-size: 12px; margin-top: 4px; display: block;">Comma-separated tags</small>
                 </div>
 
-                <button type="submit" class="btn-primary">Add Recipe</button>
+                <button type="submit" class="btn-primary" id="addRecipeSubmitBtn">Add Recipe</button>
             </form>
         </div>
     </div>
@@ -3270,6 +3270,15 @@
           photos
         };
 
+        // Auto-fetch OG image if no photo and link exists
+        if (photos.length === 0 && link) {
+          const ogImage = await fetchOgImage(link);
+          if (ogImage) {
+            photos = [ogImage];
+            updateData.photos = photos;
+          }
+        }
+
         // Update source type and value based on link
         if (link) {
           updateData.source_type = 'link';
@@ -3292,6 +3301,34 @@
       window.editRecipe = editRecipe;
       window.removeEditRecipePhoto = removeEditRecipePhoto;
       window.findImageOnline = findImageOnline;
+
+      // Fetch Open Graph image from a URL via CORS proxy
+      async function fetchOgImage(url) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+          const response = await fetch(proxyUrl, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (!response.ok) return null;
+          const html = await response.text();
+          const match = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+            || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+          if (match && match[1]) {
+            // Handle relative URLs
+            if (match[1].startsWith('//')) return 'https:' + match[1];
+            if (match[1].startsWith('/')) {
+              const origin = new URL(url).origin;
+              return origin + match[1];
+            }
+            return match[1];
+          }
+          return null;
+        } catch (error) {
+          console.error('Error fetching OG image:', error);
+          return null;
+        }
+      }
 
       // Auto-fetch recipe image from free food API
       async function fetchRecipeImage(recipeName) {
@@ -3987,6 +4024,12 @@
         e.preventDefault();
         if (!currentUser) return;
 
+        const addBtn = document.getElementById('addRecipeSubmitBtn');
+        addBtn.disabled = true;
+        addBtn.textContent = 'Loading...';
+        addBtn.style.background = '#cbd5e1';
+        addBtn.style.borderColor = '#cbd5e1';
+
         let name = '';
         let sourceType = currentRecipeType;
         let sourceValue = '';
@@ -4012,6 +4055,11 @@
 
           if (sourceValue) {
             sourceType = 'link';
+            // Auto-fetch OG image if no photo uploaded
+            if (photos.length === 0) {
+              const ogImage = await fetchOgImage(sourceValue);
+              if (ogImage) photos = [ogImage];
+            }
           }
         } else if (currentRecipeType === 'link') {
           name = document.getElementById('recipeNameLink').value.trim();
@@ -4019,6 +4067,11 @@
           const ingredientsText = document.getElementById('recipeIngredientsLink').value;
           ingredients = parseIngredients(ingredientsText);
           notes = document.getElementById('recipeNotesLink').value.trim();
+          // Auto-fetch OG image from link
+          if (sourceValue) {
+            const ogImage = await fetchOgImage(sourceValue);
+            if (ogImage) photos = [ogImage];
+          }
         } else if (currentRecipeType === 'photo') {
           name = document.getElementById('recipeNamePhoto').value.trim();
           if (currentRecipePhoto) {
@@ -4034,6 +4087,10 @@
 
         if (!name) {
           showAlert('Please enter a recipe name');
+          addBtn.disabled = false;
+          addBtn.textContent = 'Add Recipe';
+          addBtn.style.background = '';
+          addBtn.style.borderColor = '';
           return;
         }
 
@@ -4063,6 +4120,11 @@
         } catch (error) {
           console.error('Error adding recipe:', error);
           showAlert('Error adding recipe: ' + error.message);
+        } finally {
+          addBtn.disabled = false;
+          addBtn.textContent = 'Add Recipe';
+          addBtn.style.background = '';
+          addBtn.style.borderColor = '';
         }
       });
 
