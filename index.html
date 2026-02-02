@@ -3305,17 +3305,21 @@
       // Fetch Open Graph image from a URL via CORS proxy
       async function fetchOgImage(url) {
         try {
+          console.log('🖼️ Fetching OG image for:', url);
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
           const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
           const response = await fetch(proxyUrl, { signal: controller.signal });
           clearTimeout(timeoutId);
+          console.log('🖼️ Proxy response status:', response.status);
           if (!response.ok) return null;
           const data = await response.json();
           const html = data.contents || '';
+          console.log('🖼️ HTML length:', html.length);
           const match = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
           if (match && match[1]) {
+            console.log('🖼️ Found OG image:', match[1]);
             // Handle relative URLs
             if (match[1].startsWith('//')) return 'https:' + match[1];
             if (match[1].startsWith('/')) {
@@ -3324,9 +3328,10 @@
             }
             return match[1];
           }
+          console.log('🖼️ No OG image found in HTML');
           return null;
         } catch (error) {
-          console.error('Error fetching OG image:', error);
+          console.error('🖼️ Error fetching OG image:', error);
           return null;
         }
       }
