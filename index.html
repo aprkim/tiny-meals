@@ -4031,7 +4031,10 @@
       });
 
       document.getElementById('addRecipeBtn').addEventListener('click', () => {
-        document.getElementById('addRecipeModal').classList.add('active');
+        const modal = document.getElementById('addRecipeModal');
+        modal.classList.add('active');
+        modal.scrollTop = 0;
+        modal.querySelector('.modal').scrollTop = 0;
       });
 
       document.getElementById('recipeSearchInput').addEventListener('input', (e) => {
