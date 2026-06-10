@@ -3469,24 +3469,51 @@
         }
       }
 
-      async function copySyncCode() {
+      function copySyncCode() {
         console.log('🔍 copySyncCode called');
-        const code = await ensureSyncCode();
         const copyBtn = document.getElementById('copySyncCodeBtn');
-
-        console.log('🔍 Copying sync code to clipboard:', code);
-        navigator.clipboard.writeText(code).then(() => {
+        // Read synchronously — Safari/iOS only allow clipboard writes
+        // inside the same tick as the user gesture, so awaiting Firebase
+        // first (as the old code did) silently fails the clipboard call.
+        const code = localStorage.getItem('tinyMeals_syncCode')
+          || (document.getElementById('syncCodeDisplay')?.textContent || '').trim();
+        if (!code) {
+          copyBtn.textContent = 'No code';
+          setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+          // Kick off async code creation so the next click works
+          ensureSyncCode();
+          return;
+        }
+        const showCopied = () => {
           console.log('✅ Sync code copied to clipboard');
-          // Change button text to "Copied"
           copyBtn.textContent = 'Copied';
-
-          // Revert back to "Copy" after 2 seconds
-          setTimeout(() => {
-            copyBtn.textContent = 'Copy';
-          }, 2000);
-        }).catch((error) => {
-          console.error('❌ Failed to copy to clipboard:', error);
-        });
+          setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+        };
+        const showFailed = () => {
+          copyBtn.textContent = 'Failed';
+          setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+        };
+        const tryFallback = () => {
+          const ta = document.createElement('textarea');
+          ta.value = code;
+          ta.style.position = 'fixed';
+          ta.style.top = '-9999px';
+          ta.setAttribute('readonly', '');
+          document.body.appendChild(ta);
+          ta.select();
+          let ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+          document.body.removeChild(ta);
+          if (ok) showCopied(); else showFailed();
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(code).then(showCopied).catch((error) => {
+            console.error('❌ Clipboard API failed, trying fallback:', error);
+            tryFallback();
+          });
+        } else {
+          tryFallback();
+        }
       }
 
       async function submitSyncCode() {
